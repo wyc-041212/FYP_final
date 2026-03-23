@@ -1,0 +1,106 @@
+/home/comp/f2256768/cdf_cache/cache_clip/DF40_test_cdf/
+├── EFS/
+│   ├── cls_ddim.npz           103M
+│   ├── cls_DiT.npz            103M
+│   ├── cls_pixart.npz         103M
+│   ├── cls_RDDM.npz            51M
+│   ├── cls_sd2.1.npz          103M
+│   ├── cls_SiT.npz            103M
+│   ├── cls_StyleGAN2.npz      103M
+│   ├── cls_StyleGAN3.npz      103M
+│   ├── cls_StyleGANXL.npz      63M
+│   ├── cls_VQGAN.npz          103M
+│   ├── manifest_ddim.csv      5.7M
+│   ├── manifest_DiT.csv       4.6M
+│   ├── manifest_pixart.csv    6.0M
+│   ├── manifest_RDDM.csv      2.6M
+│   ├── manifest_sd2.1.csv     5.9M
+│   ├── manifest_SiT.csv       4.6M
+│   ├── manifest_StyleGAN2.csv 5.5M
+│   ├── manifest_StyleGAN3.csv 5.5M
+│   ├── manifest_StyleGANXL.csv 3.5M
+│   └── manifest_VQGAN.csv     4.9M
+│
+├── FR/
+│   ├── cls_danet.npz           70M
+│   ├── cls_facevid2vid.npz     73M
+│   ├── cls_fomm.npz            74M
+│   ├── cls_hyperreenact.npz    75M
+│   ├── cls_lia.npz             72M
+│   ├── cls_mcnet.npz           70M
+│   ├── cls_MRAA.npz            74M
+│   ├── cls_one_shot_free.npz   75M
+│   ├── cls_pirender.npz        74M
+│   ├── cls_sadtalker.npz       75M
+│   ├── cls_tpsm.npz            75M
+│   ├── cls_wav2lip.npz         33M
+│   ├── manifest_danet.csv      2.7M
+│   ├── manifest_facevid2vid.csv 3.3M
+│   ├── manifest_fomm.csv       2.8M
+│   ├── manifest_hyperreenact.csv 3.5M
+│   ├── manifest_lia.csv        2.7M
+│   ├── manifest_mcnet.csv      2.7M
+│   ├── manifest_MRAA.csv       2.8M
+│   ├── manifest_one_shot_free.csv 3.6M
+│   ├── manifest_pirender.csv   3.1M
+│   ├── manifest_sadtalker.csv  4.1M
+│   ├── manifest_tpsm.csv       2.8M
+│   └── manifest_wav2lip.csv    1.7M
+│
+├── FS/
+│   ├── cls_blendface.npz       74M
+│   ├── cls_e4s.npz             34M
+│   ├── cls_facedancer.npz      74M
+│   ├── cls_faceswap.npz        74M
+│   ├── cls_fsgan.npz           72M
+│   ├── cls_inswap.npz          49M
+│   ├── cls_mobileswap.npz      74M
+│   ├── cls_simswap.npz         74M
+│   ├── cls_uniface.npz         73M
+│   ├── manifest_blendface.csv  3.2M
+│   ├── manifest_e4s.csv        1.3M
+│   ├── manifest_facedancer.csv 3.3M
+│   ├── manifest_faceswap.csv   3.1M
+│   ├── manifest_fsgan.csv      2.8M
+│   ├── manifest_inswap.csv     2.0M
+│   ├── manifest_mobileswap.csv 3.3M
+│   ├── manifest_simswap.csv    3.0M
+│   └── manifest_uniface.csv    3.0M
+
+/tmp/f2256768/cdf_cache/cache_clip_patch/DF40_test_cdf/
+├── EFS/
+│   ├── patch_ddim.npz         26G
+│   ├── patch_DiT.npz          26G
+│   ├── patch_pixart.npz       26G
+│   ├── patch_RDDM.npz         13G
+│   ├── patch_sd2.1.npz        26G
+│   ├── patch_SiT.npz          26G
+│   ├── patch_StyleGAN2.npz    26G
+│   ├── patch_StyleGAN3.npz    26G
+│   ├── patch_StyleGANXL.npz   16G
+│   └── patch_VQGAN.npz        26G
+├── FR/
+│   ├── patch_danet.npz        18G
+│   ├── patch_facevid2vid.npz  19G
+│   ├── patch_fomm.npz         19G
+│   ├── patch_hyperreenact.npz 19G
+│   ├── patch_lia.npz          18G
+│   ├── patch_mcnet.npz        18G
+│   ├── patch_MRAA.npz         19G
+│   ├── patch_one_shot_free.npz 19G
+│   ├── patch_pirender.npz     19G
+│   ├── patch_sadtalker.npz    20G
+│   ├── patch_tpsm.npz         19G
+│   └── patch_wav2lip.npz     8.3G
+├── FS/
+│   ├── patch_blendface.npz    19G
+│   ├── patch_e4s.npz         8.4G
+│   ├── patch_facedancer.npz   19G
+│   ├── patch_faceswap.npz     19G
+│   ├── patch_fsgan.npz        18G
+│   ├── patch_inswap.npz       13G
+│   ├── patch_mobileswap.npz   19G
+│   ├── patch_simswap.npz      19G
+│   └── patch_uniface.npz      19G
+├── patch_ddim.npz             26G
+├── patch_DiT.npz             6.5G

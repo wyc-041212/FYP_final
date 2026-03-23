@@ -1,0 +1,101 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.ipynb_checkpoints/
+
+# Environments
+.env
+.env.*
+.venv/
+venv/
+ENV/
+env/
+
+# Logs / temp
+*.log
+*.out
+*.err
+*.tmp
+*.temp
+*.swp
+*.swo
+nohup.out
+
+# Archives / packaged artifacts
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.7z
+
+# Cluster / scheduler outputs
+slurm-*.out
+slurm-*.err
+
+# Local runtime data
+cache/**
+outputs/**
+demo/outputs/**
+data/frames/**
+data/manifests/**
+
+# Raw local datasets
+data/raw/**
+
+# Keep key project metadata files
+!pipeline_manifest.json
+!package.json
+!requirements.txt
+!environment.yml
+
+# Checkpoints / model artifacts
+# Keep directory structure and lightweight metadata, ignore heavyweight binaries by default.
+checkpoints/**/*.pt
+checkpoints/**/*.pth
+checkpoints/**/*.bin
+checkpoints/**/*.joblib
+checkpoints/**/*.npz
+checkpoints/**/*.ckpt
+
+# If you want to version specific metadata files under checkpoints, keep them.
+!checkpoints/**/summary.json
+!checkpoints/**/route_meta_head_meta.json
+
+# External model links / downloaded assets
+models/clip
+models/facer
+models/other_backbones/*
+!models/other_backbones/.gitkeep
+
+# Experiment leftovers / legacy snapshots
+experiments/probes/legacy_bundle_snapshot/**
+experiments/research_utils/legacy_root_checkpoints/**
+
+# Keep empty directories when needed
+!configs/train/.gitkeep
+!configs/eval/.gitkeep
+!configs/demo/.gitkeep
+!data/raw/.gitkeep
+!data/frames/.gitkeep
+!data/manifests/.gitkeep
+!demo/inputs/.gitkeep
+!demo/sample_videos/.gitkeep
+!demo/sample_frames/.gitkeep
+!demo/outputs/.gitkeep
+!outputs/runs/.gitkeep
+!outputs/reports/.gitkeep
+!outputs/figures/.gitkeep
+!outputs/demos/.gitkeep

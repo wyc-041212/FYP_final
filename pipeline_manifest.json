@@ -1,0 +1,25 @@
+{
+  "name": "route_meta_fusion_pipeline_clean",
+  "created_from": "20260319_022446_route_meta_fusion_full_bundle",
+  "type": "clean_runnable_snapshot",
+  "bundle_dir": "./bundle",
+  "checkpoint_dir": "./checkpoints",
+  "entrypoints": {
+    "sample": "./sample/sample.py",
+    "probe_bundle": "./sample/sample.py",
+    "demo": "./demo/demo.py",
+    "replay_eval": "./replay.py"
+  },
+  "defaults": {
+    "cls_cache_root": "/Users/wuyuchen/Desktop/FYP/Fyp_clean/cache_clip",
+    "patch_cache_root": "/Users/wuyuchen/Desktop/FYP/Fyp_clean/cache_clip_patch",
+    "compact_cache_dir": "/Users/wuyuchen/Desktop/FYP/Fyp_clean/outputs/experiments/balanced_3000_seed42/compact_patch_rows",
+    "df40_data_root": "/Volumes/未命名/DF40",
+    "clip_model_dir": "/Users/wuyuchen/.cache/huggingface/hub/models--openai--clip-vit-large-patch14"
+  },
+  "notes": [
+    "This folder does not modify the main repo source files.",
+    "Replay evaluation still depends on the existing cache_clip and cache_clip_patch directories on this machine.",
+    "Bundle probing on newly sampled folders is self-contained aside from the upstream checkpoint and local model weights."
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "bundle_dir": "/Users/wuyuchen/Desktop/FYP/Fyp_clean/outputs/experiments/balanced_3000_seed42/20260319_022446_route_meta_fusion_full_bundle",
+  "created_at": "20260319_022446",
+  "type": "full_downstream_route_meta_bundle",
+  "upstream_checkpoint": "/Users/wuyuchen/Desktop/FYP/Fyp_clean/outputs/experiments/balanced_3000_seed42/clip_hybrid_manifold_5way_realbias_v2_ckpt/checkpoint_best_hybrid_manifold.pt",
+  "upstream_checkpoint_exists": true,
+  "device_used_for_rebuild": "mps",
+  "config": {
+    "seed": 42,
+    "train_real_max": 0,
+    "max_train_fake_per_method": 0,
+    "val_ratio": 0.2,
+    "val_split_mode": "holdout_method",
+    "pair_region_mode": "all_regions",
+    "pair_route_mode": "weighted",
+    "patch_train_groups": [
+      "FS",
+      "FR",
+      "FE",
+      "EFS"
+    ],
+    "route_batch_size": 2048
+  },
+  "counts": {
+    "num_train_fake": 54399,
+    "num_train_real": 21414,
+    "num_train_total": 75813,
+    "num_fit_rows": 60330,
+    "num_val_rows": 15483,
+    "num_methods": 34
+  },
+  "method_counts": {
+    "FS/blendface": 1600,
+    "FS/e4s": 1600,
+    "FS/facedancer": 1600,
+    "FS/faceswap": 1600,
+    "FS/fsgan": 1600,
+    "FS/inswap": 1600,
+    "FS/mobileswap": 1600,
+    "FS/simswap": 1600,
+    "FS/uniface": 1600,
+    "FR/MRAA": 1600,
+    "FR/danet": 1600,
+    "FR/facevid2vid": 1600,
+    "FR/fomm": 1600,
+    "FR/hyperreenact": 1600,
+    "FR/lia": 1600,
+    "FR/mcnet": 1600,
+    "FR/one_shot_free": 1600,
+    "FR/pirender": 1600,
+    "FR/sadtalker": 1601,
+    "FR/tpsm": 1600,
+    "FR/wav2lip": 1600,
+    "FE/e4e": 1600,
+    "FE/stargan": 1600,
+    "FE/starganv2": 1598,
+    "EFS/DiT": 1600,
+    "EFS/RDDM": 1600,
+    "EFS/SiT": 1600,
+    "EFS/StyleGAN2": 1600,
+    "EFS/StyleGAN3": 1600,
+    "EFS/StyleGANXL": 1600,
+    "EFS/VQGAN": 1600,
+    "EFS/ddim": 1600,
+    "EFS/pixart": 1600,
+    "EFS/sd2.1": 1600
+  },
+  "route_meta_threshold": 0.2,
+  "route_meta_search": {
+    "EFS": {
+      "c": 0.5,
+      "val_balanced_accuracy": 1.0,
+      "val_accuracy": 1.0,
+      "val_auc": 1.0
+    },
+    "FS": {
+      "c": 1.0,
+      "val_balanced_accuracy": 0.9998832593976186,
+      "val_accuracy": 0.9998663637578511,
+      "val_auc": 0.9999999270371235
+    },
+    "FR": {
+      "c": 2.0,
+      "val_balanced_accuracy": 0.99953125,
+      "val_accuracy": 0.9995990912735534,
+      "val_auc": 1.0
+    },
+    "FE": {
+      "c": 0.5,
+      "val_balanced_accuracy": 1.0,
+      "val_accuracy": 1.0,
+      "val_auc": 1.0
+    }
+  },
+  "artifacts": {
+    "patch_branch": "/Users/wuyuchen/Desktop/FYP/Fyp_clean/outputs/experiments/balanced_3000_seed42/20260319_022446_route_meta_fusion_full_bundle/patch_branch.joblib",
+    "pair_branch": "/Users/wuyuchen/Desktop/FYP/Fyp_clean/outputs/experiments/balanced_3000_seed42/20260319_022446_route_meta_fusion_full_bundle/pair_branch.joblib",
+    "route_meta_head": "/Users/wuyuchen/Desktop/FYP/Fyp_clean/outputs/experiments/balanced_3000_seed42/20260319_022446_route_meta_fusion_full_bundle/route_meta_head.joblib"
+  }
+}
