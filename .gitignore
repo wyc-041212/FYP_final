@@ -46,7 +46,8 @@ slurm-*.out
 slurm-*.err
 
 # Local runtime data
-cache/**
+cache
+models
 outputs/**
 demo/outputs/**
 data/frames/**
@@ -62,17 +63,14 @@ data/raw/**
 !environment.yml
 
 # Checkpoints / model artifacts
-# Keep directory structure and lightweight metadata, ignore heavyweight binaries by default.
-checkpoints/**/*.pt
-checkpoints/**/*.pth
-checkpoints/**/*.bin
-checkpoints/**/*.joblib
-checkpoints/**/*.npz
-checkpoints/**/*.ckpt
-
-# If you want to version specific metadata files under checkpoints, keep them.
-!checkpoints/**/summary.json
-!checkpoints/**/route_meta_head_meta.json
+# Current project checkpoints are small enough to version directly.
+!checkpoints/**/*.pt
+!checkpoints/**/*.pth
+!checkpoints/**/*.bin
+!checkpoints/**/*.joblib
+!checkpoints/**/*.npz
+!checkpoints/**/*.ckpt
+!checkpoints/**/*.json
 
 # External model links / downloaded assets
 models/clip

@@ -17,9 +17,10 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "src"))
 
 from train.train_downstream_head import (  # noqa: E402
-    HYBRID_LABELS,
+    BASE_FAKE_GROUPS,
     build_meta_features,
     build_prob_map,
+    configure_group_scheme,
     collect_cls_rows,
     compute_real_pool_region_means,
     discover_flat_method_caches,
@@ -40,6 +41,7 @@ from train.train_downstream_head import (  # noqa: E402
     route_prob_from_map,
     set_seed,
     split_train_indices,
+    summarize_method_rows_for_groups,
 )
 from train.train_downstream_head import image_region_delta_features, predict_patch_scores  # noqa: E402
 from prepare.cache import CompactPatchCache, EmbeddingCache, PatchCache, compute_region_means  # noqa: E402
@@ -61,6 +63,7 @@ class MainRuntime:
     hybrid_std: np.ndarray
     hybrid_temperature: float
     hybrid_alpha: float
+    hybrid_labels: list[str]
     device: torch.device
     route_batch_size: int
 
@@ -139,10 +142,11 @@ def load_main_runtime(
         route_meta_head=route_meta_head,
     )
     device = resolve_torch_device(device_name)
-    hybrid_model, hybrid_mean, hybrid_std, hybrid_temperature, hybrid_alpha = load_hybrid_checkpoint(
+    hybrid_model, hybrid_mean, hybrid_std, hybrid_temperature, hybrid_alpha, hybrid_labels = load_hybrid_checkpoint(
         upstream_checkpoint,
         device,
     )
+    configure_group_scheme("FR" not in hybrid_labels, hybrid_labels=hybrid_labels)
     return MainRuntime(
         artifacts=artifacts,
         hybrid_model=hybrid_model,
@@ -150,6 +154,7 @@ def load_main_runtime(
         hybrid_std=hybrid_std,
         hybrid_temperature=hybrid_temperature,
         hybrid_alpha=hybrid_alpha,
+        hybrid_labels=hybrid_labels,
         device=device,
         route_batch_size=route_batch_size,
     )
@@ -215,7 +220,7 @@ def predict_sample(
         runtime.device,
     )
     route_fake = route_fake_score(route_prob)
-    route_top1 = np.asarray([HYBRID_LABELS[int(i)] for i in np.argmax(route_prob, axis=1)], dtype=object)
+    route_top1 = np.asarray([runtime.hybrid_labels[int(i)] for i in np.argmax(route_prob, axis=1)], dtype=object)
 
     real_pool_means = pair_bundle["real_pool_means"]
     patch_x = image_region_delta_features(patch_cache, real_pool_means)
@@ -267,6 +272,7 @@ def build_sample_report(
     cls_cache: EmbeddingCache,
     prediction: SamplePrediction,
     threshold: float,
+    hybrid_labels: list[str],
 ) -> dict[str, object]:
     pair_ids = cls_cache.pair_id.astype(object)
     folder_summary = []
@@ -284,7 +290,7 @@ def build_sample_report(
                 "fake_positive_rate": float(np.mean(prediction.pred[idx])),
                 "route_top1_counts": {
                     label: int(np.sum(prediction.route_top1[idx] == label))
-                    for label in HYBRID_LABELS
+                    for label in hybrid_labels
                     if np.any(prediction.route_top1[idx] == label)
                 },
             }
@@ -300,7 +306,7 @@ def build_sample_report(
         "fake_positive_rate": float(np.mean(prediction.pred)),
         "route_top1_counts": {
             label: int(np.sum(prediction.route_top1 == label))
-            for label in HYBRID_LABELS
+            for label in hybrid_labels
             if np.any(prediction.route_top1 == label)
         },
         "folder_summary": folder_summary,
@@ -476,6 +482,7 @@ def run_sample(args: argparse.Namespace) -> dict[str, object]:
             batch.cls_cache,
             prediction,
             runtime.route_meta_threshold,
+            runtime.hybrid_labels,
         )
     return report
 
@@ -485,10 +492,28 @@ def load_head_manifest(head_meta: Path) -> dict:
 
 
 def manifest_config(manifest: dict) -> dict:
+    variant = str(manifest.get("variant", manifest.get("variant_name", ""))).lower()
+    no_fr = "no_fr" in variant
+    defaults = {
+        "seed": int(manifest.get("seed", 42)),
+        "train_real_max": int(manifest.get("train_real_max", 0)),
+        "eval_real_max": int(manifest.get("eval_real_max", 2000)),
+        "max_train_fake_per_method": int(manifest.get("max_train_fake_per_method", 0)),
+        "patch_train_groups": ["EFS", "FS", "FE"] if no_fr else ["FS", "FR", "FE", "EFS"],
+        "route_batch_size": int(manifest.get("route_batch_size", 2048)),
+        "val_ratio": float(manifest.get("val_ratio", 0.2)),
+        "val_split_mode": str(manifest.get("val_split_mode", "holdout_method")),
+        "pair_region_mode": str(manifest.get("pair_region_mode", "all_regions")),
+        "pair_route_mode": str(manifest.get("pair_route_mode", "weighted")),
+        "route_gating_temperature": float(manifest.get("route_gating_temperature", 1.0)),
+        "route_gating_floor": float(manifest.get("route_gating_floor", 0.0)),
+    }
     config = manifest.get("config")
     if isinstance(config, dict):
-        return config
-    return manifest
+        merged = dict(defaults)
+        merged.update(config)
+        return merged
+    return defaults
 
 
 def build_replay_config(args: argparse.Namespace, manifest: dict) -> SimpleNamespace:
@@ -503,7 +528,7 @@ def build_replay_config(args: argparse.Namespace, manifest: dict) -> SimpleNames
         hybrid_checkpoint=args.upstream_checkpoint,
         seed=int(config["seed"]),
         train_real_max=int(config["train_real_max"]),
-        eval_real_max=0,
+        eval_real_max=int(config["eval_real_max"]),
         max_train_fake_per_method=int(config["max_train_fake_per_method"]),
         max_test_fake_per_method=0,
         max_ood_fake_per_method=0,
@@ -514,6 +539,8 @@ def build_replay_config(args: argparse.Namespace, manifest: dict) -> SimpleNames
         pair_region_mode=str(config["pair_region_mode"]),
         no_tuning_mainline=True,
         pair_route_mode=str(config["pair_route_mode"]),
+        route_gating_temperature=float(config["route_gating_temperature"]),
+        route_gating_floor=float(config["route_gating_floor"]),
         fusion_step=0.05,
         auto_generic_pool="no_tuning",
         compact_cache_dir=args.compact_cache_dir,
@@ -663,10 +690,10 @@ def run_replay(args: argparse.Namespace) -> None:
     route_meta_experts = head_bundle["route_meta_experts"]
     route_meta_threshold = float(head_bundle["route_meta_threshold"])
 
+    hybrid_model, hybrid_mean, hybrid_std, hybrid_temperature, hybrid_alpha, hybrid_labels = load_hybrid_checkpoint(cfg.hybrid_checkpoint, device)
+    configure_group_scheme("FR" not in hybrid_labels, hybrid_labels=hybrid_labels)
     patch_train_prob = predict_patch_scores(patch_scaler, patch_clf, train_x)
     patch_train_scores = predict_group_binary_experts(patch_group_classifiers, train_x)
-
-    hybrid_model, hybrid_mean, hybrid_std, hybrid_temperature, hybrid_alpha = load_hybrid_checkpoint(cfg.hybrid_checkpoint, device)
     train_cls_rows = collect_cls_rows(iter_regular_cls_rows(cfg.cls_cache_root, "DF40_train", cfg.train_real_cls_cache))
     test_cls_rows = collect_cls_rows(iter_regular_cls_rows(cfg.cls_cache_root, "DF40_test_ff", cfg.test_real_cls_cache))
     ood_cls_rows = collect_cls_rows(iter_ood_cls_rows(cfg.cls_cache_root, "DF40_test_ood"))
@@ -695,12 +722,21 @@ def run_replay(args: argparse.Namespace) -> None:
         pair_region_idx,
         pair_region_names_by_group,
     )
-    train_meta_x = build_meta_features(train_route_prob_mat, train_pair_scores, patch_train_scores, patch_train_prob)
+    train_meta_x = build_meta_features(
+        train_route_prob_mat,
+        train_pair_scores,
+        patch_train_scores,
+        patch_train_prob,
+        route_gating_temperature=cfg.route_gating_temperature,
+        route_gating_floor=cfg.route_gating_floor,
+    )
     val_route_meta_prob, _ = predict_route_aware_meta_fusion(
         route_meta_experts,
         train_route_prob_mat[val_idx],
         train_meta_x[val_idx],
         cfg.pair_route_mode,
+        route_gating_temperature=cfg.route_gating_temperature,
+        route_gating_floor=cfg.route_gating_floor,
     )
     threshold_value = route_meta_threshold
     validation_metrics = metrics_from_binary_prob(train_y[val_idx], val_route_meta_prob, threshold_value)
@@ -713,8 +749,9 @@ def run_replay(args: argparse.Namespace) -> None:
         "auc": validation_metrics["auc"],
     }
 
+    eval_groups = list(BASE_FAKE_GROUPS) if "FR" not in hybrid_labels else ["FS", "FR", "FE", "EFS"]
     test_ff_summary = evaluate_regular_route_meta(
-        discover_flat_method_caches(cfg.patch_cache_root, "DF40_test_ff", ["FS", "FR", "FE", "EFS"]),
+        discover_flat_method_caches(cfg.patch_cache_root, "DF40_test_ff", eval_groups),
         test_real_cache,
         args=cfg,
         route_map=test_route_map,
@@ -730,7 +767,7 @@ def run_replay(args: argparse.Namespace) -> None:
         route_meta_threshold=threshold_value,
     )
     ood_summary = evaluate_ood_route_meta(
-        discover_ood_method_entries(cfg.patch_cache_root),
+        discover_ood_method_entries(cfg.patch_cache_root, eval_groups),
         args=cfg,
         route_map=ood_route_map,
         pair_mean_dirs=pair_mean_dirs,
@@ -744,6 +781,15 @@ def run_replay(args: argparse.Namespace) -> None:
         route_meta_experts=route_meta_experts,
         route_meta_threshold=threshold_value,
     )
+    extra_summaries: dict[str, dict] = {}
+    if "FR" not in hybrid_labels:
+        nonfr_groups = ["EFS", "FS", "FE"]
+        extra_summaries = {
+            "test_ff_nonfr": {"route_meta_fusion": summarize_method_rows_for_groups(test_ff_summary["methods"], nonfr_groups)},
+            "test_ff_fr": {"route_meta_fusion": summarize_method_rows_for_groups(test_ff_summary["methods"], ["FR"])},
+            "ood_nonfr": {"route_meta_fusion": summarize_method_rows_for_groups(ood_summary["methods"], nonfr_groups)},
+            "ood_fr": {"route_meta_fusion": summarize_method_rows_for_groups(ood_summary["methods"], ["FR"])},
+        }
 
     payload = {
         "mode": "replay",
@@ -778,6 +824,7 @@ def run_replay(args: argparse.Namespace) -> None:
             "route_meta_fusion": ood_summary,
         },
     }
+    payload.update(extra_summaries)
     args.output_json.parent.mkdir(parents=True, exist_ok=True)
     args.output_json.write_text(json.dumps(payload, indent=2))
     export_route_meta_csv(args.output_csv, payload)

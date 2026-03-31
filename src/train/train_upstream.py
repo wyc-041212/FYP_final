@@ -22,10 +22,24 @@ from prepare.cache import EmbeddingCache
 from utils.device import resolve_torch_device
 
 EPS = 1e-8
-ALL_GROUPS = ["EFS", "FS", "FR", "FE", "REAL"]
-PAIR_GROUPS = ["FS", "FR", "FE"]
+EFS_LABEL = "EFS"
+REAL_LABEL = "REAL"
+BASE_ALL_GROUPS = ["EFS", "FS", "FR", "FE", "REAL"]
+BASE_PAIR_GROUPS = ["FS", "FR", "FE"]
+NO_FR_ALL_GROUPS = ["EFS", "FS", "FE", "REAL"]
+NO_FR_PAIR_GROUPS = ["FS", "FE"]
+ALL_GROUPS = list(BASE_ALL_GROUPS)
+PAIR_GROUPS = list(BASE_PAIR_GROUPS)
 GROUP_TO_IDX = {group: idx for idx, group in enumerate(ALL_GROUPS)}
 PAIR_TO_IDX = {group: idx for idx, group in enumerate(PAIR_GROUPS)}
+
+
+def configure_group_scheme(no_fr: bool) -> None:
+    global ALL_GROUPS, PAIR_GROUPS, GROUP_TO_IDX, PAIR_TO_IDX
+    ALL_GROUPS = list(NO_FR_ALL_GROUPS if no_fr else BASE_ALL_GROUPS)
+    PAIR_GROUPS = list(NO_FR_PAIR_GROUPS if no_fr else BASE_PAIR_GROUPS)
+    GROUP_TO_IDX = {group: idx for idx, group in enumerate(ALL_GROUPS)}
+    PAIR_TO_IDX = {group: idx for idx, group in enumerate(PAIR_GROUPS)}
 
 
 class HybridManifoldModel(nn.Module):
@@ -40,17 +54,21 @@ class HybridManifoldModel(nn.Module):
         efs_basis_init: np.ndarray,
         fake_offset_init: np.ndarray,
         delta_proto_init: np.ndarray,
+        labels: Sequence[str] | None = None,
+        pair_groups: Sequence[str] | None = None,
     ) -> None:
         super().__init__()
+        self.labels = tuple(labels or ALL_GROUPS)
+        self.pair_groups = tuple(pair_groups or PAIR_GROUPS)
         self.linear = nn.Linear(dim, dim, bias=False)
-        self.classifier = nn.Linear(dim, len(ALL_GROUPS))
+        self.classifier = nn.Linear(dim, len(self.labels))
         self.real_center = nn.Parameter(torch.from_numpy(real_center_init.astype(np.float32)))
         self.efs_center = nn.Parameter(torch.from_numpy(efs_center_init.astype(np.float32)))
         self.real_basis_raw = nn.Parameter(torch.from_numpy(real_basis_init.astype(np.float32)))
         self.efs_basis_raw = nn.Parameter(torch.from_numpy(efs_basis_init.astype(np.float32)))
         self.fake_offsets = nn.Parameter(torch.from_numpy(fake_offset_init.astype(np.float32)))
         self.delta_prototypes = nn.Parameter(torch.from_numpy(delta_proto_init.astype(np.float32)))
-        self.logit_scale = nn.Parameter(torch.full((len(ALL_GROUPS),), -2.0, dtype=torch.float32))
+        self.logit_scale = nn.Parameter(torch.full((len(self.labels),), -2.0, dtype=torch.float32))
         with torch.no_grad():
             self.linear.weight.copy_(torch.eye(dim, dtype=torch.float32))
 
@@ -72,24 +90,24 @@ class HybridManifoldModel(nn.Module):
         return center[None, :] + proj
 
     def all_offsets(self) -> torch.Tensor:
-        return torch.cat(
-            [
-                self.efs_center[None, :],
-                (self.real_center + self.fake_offsets[0])[None, :],
-                (self.real_center + self.fake_offsets[1])[None, :],
-                (self.real_center + self.fake_offsets[2])[None, :],
-                self.real_center[None, :],
-            ],
-            dim=0,
-        )
+        offsets = []
+        for label in self.labels:
+            if label == EFS_LABEL:
+                offsets.append(self.efs_center[None, :])
+            elif label == REAL_LABEL:
+                offsets.append(self.real_center[None, :])
+            else:
+                pair_idx = self.pair_groups.index(label)
+                offsets.append((self.real_center + self.fake_offsets[pair_idx])[None, :])
+        return torch.cat(offsets, dim=0)
 
     def manifold_dist_sq(self, y: torch.Tensor) -> torch.Tensor:
         real_basis = self.real_basis()
         efs_basis = self.efs_basis()
         offsets = self.all_offsets()
-        bases = [efs_basis, real_basis, real_basis, real_basis, real_basis]
         dists = []
-        for idx, basis in enumerate(bases):
+        for idx, label in enumerate(self.labels):
+            basis = efs_basis if label == EFS_LABEL else real_basis
             shifted = y - offsets[idx][None, :]
             coeff = shifted @ basis
             proj = coeff @ basis.t()
@@ -242,11 +260,11 @@ def margin_pair_loss(logits: torch.Tensor, labels: torch.Tensor, margin: float) 
 
 def hard_negative_margin_loss(logits: torch.Tensor, labels: torch.Tensor, margin: float) -> torch.Tensor:
     losses = []
-    efs_idx = GROUP_TO_IDX["EFS"]
+    efs_idx = GROUP_TO_IDX[EFS_LABEL]
     fs_idx = GROUP_TO_IDX["FS"]
-    fr_idx = GROUP_TO_IDX["FR"]
+    fr_idx = GROUP_TO_IDX.get("FR")
     fe_idx = GROUP_TO_IDX["FE"]
-    real_idx = GROUP_TO_IDX["REAL"]
+    real_idx = GROUP_TO_IDX[REAL_LABEL]
 
     efs_mask = labels == efs_idx
     if torch.any(efs_mask):
@@ -254,14 +272,15 @@ def hard_negative_margin_loss(logits: torch.Tensor, labels: torch.Tensor, margin
         rival = torch.maximum(logits[efs_mask, fe_idx], logits[efs_mask, real_idx])
         losses.append(F.relu(margin + rival - true))
 
-    fr_mask = labels == fr_idx
-    if torch.any(fr_mask):
-        true = logits[fr_mask, fr_idx]
-        rival = torch.maximum(logits[fr_mask, fs_idx], logits[fr_mask, real_idx])
-        losses.append(F.relu(margin + rival - true))
+    if fr_idx is not None:
+        fr_mask = labels == fr_idx
+        if torch.any(fr_mask):
+            true = logits[fr_mask, fr_idx]
+            rival = torch.maximum(logits[fr_mask, fs_idx], logits[fr_mask, real_idx])
+            losses.append(F.relu(margin + rival - true))
 
     fs_mask = labels == fs_idx
-    if torch.any(fs_mask):
+    if fr_idx is not None and torch.any(fs_mask):
         true = logits[fs_mask, fs_idx]
         rival = logits[fs_mask, fr_idx]
         losses.append(F.relu(margin + rival - true))
@@ -272,13 +291,13 @@ def hard_negative_margin_loss(logits: torch.Tensor, labels: torch.Tensor, margin
 
 
 def real_margin_loss(logits: torch.Tensor, labels: torch.Tensor, margin: float) -> torch.Tensor:
-    real_idx = GROUP_TO_IDX["REAL"]
+    real_idx = GROUP_TO_IDX[REAL_LABEL]
     real_mask = labels == real_idx
     if not torch.any(real_mask):
         return torch.tensor(0.0, device=logits.device)
 
     true = logits[real_mask, real_idx]
-    fake_logits = logits[real_mask][:, [GROUP_TO_IDX["EFS"], GROUP_TO_IDX["FS"], GROUP_TO_IDX["FR"], GROUP_TO_IDX["FE"]]]
+    fake_logits = logits[real_mask][:, [GROUP_TO_IDX[group] for group in ALL_GROUPS if group != REAL_LABEL]]
     rival = fake_logits.max(dim=1).values
     return torch.mean(F.relu(margin + rival - true))
 
@@ -292,7 +311,10 @@ def true_score_floor_loss(
 ) -> torch.Tensor:
     prob = torch.softmax(logits, dim=1)
     true_prob = prob[torch.arange(len(labels), device=logits.device), labels]
-    hard_mask = (labels == GROUP_TO_IDX["EFS"]) | (labels == GROUP_TO_IDX["FR"])
+    hard_mask = labels == GROUP_TO_IDX[EFS_LABEL]
+    fr_idx = GROUP_TO_IDX.get("FR")
+    if fr_idx is not None:
+        hard_mask = hard_mask | (labels == fr_idx)
     target = torch.full_like(true_prob, target_default)
     target = torch.where(hard_mask, torch.full_like(true_prob, target_hard), target)
     weight = torch.ones_like(true_prob)
@@ -444,6 +466,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default="auto")
     parser.add_argument(
+        "--no-fr",
+        action="store_true",
+        help="Train the upstream model without FR, using labels EFS/FS/FE/REAL.",
+    )
+    parser.add_argument(
         "--legacy-compat",
         action="store_true",
         help="Approximate the older plain hybrid-manifold baseline by disabling later training additions and writing the older JSON layout.",
@@ -491,6 +518,9 @@ def build_output_settings(args: argparse.Namespace) -> dict:
         "lambda_manifold_aux": args.lambda_manifold_aux,
         "seed": args.seed,
         "output_json": str(args.output_json),
+        "labels": list(ALL_GROUPS),
+        "pair_groups": list(PAIR_GROUPS),
+        "no_fr": bool(args.no_fr),
     }
     if not args.legacy_compat:
         settings.update(
@@ -522,6 +552,7 @@ def main() -> None:
     args = parse_args()
     if args.legacy_compat:
         apply_legacy_compat(args)
+    configure_group_scheme(args.no_fr)
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     device = resolve_torch_device(args.device)
@@ -548,7 +579,7 @@ def main() -> None:
         [sum(train_counts.values()) / (len(ALL_GROUPS) * train_counts[group]) for group in ALL_GROUPS],
         dtype=np.float32,
     )
-    class_weight[GROUP_TO_IDX["REAL"]] *= args.real_class_multiplier
+    class_weight[GROUP_TO_IDX[REAL_LABEL]] *= args.real_class_multiplier
     class_weight_t = torch.from_numpy(class_weight).to(device)
 
     fit_x = train_x[fit_idx]
@@ -556,8 +587,8 @@ def main() -> None:
     val_x = train_x[val_idx]
     val_y_names = train_y_names[val_idx]
 
-    real_fit = fit_x[fit_y == GROUP_TO_IDX["REAL"]]
-    efs_fit = fit_x[fit_y == GROUP_TO_IDX["EFS"]]
+    real_fit = fit_x[fit_y == GROUP_TO_IDX[REAL_LABEL]]
+    efs_fit = fit_x[fit_y == GROUP_TO_IDX[EFS_LABEL]]
     real_center_init = robust_center(real_fit)
     efs_center_init = robust_center(efs_fit)
     real_basis_init = pca_basis(real_fit, args.real_rank)
@@ -584,6 +615,8 @@ def main() -> None:
         efs_basis_init=efs_basis_init,
         fake_offset_init=fake_offset_init,
         delta_proto_init=delta_proto_init,
+        labels=ALL_GROUPS,
+        pair_groups=PAIR_GROUPS,
     ).to(device)
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
 

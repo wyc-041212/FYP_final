@@ -6,7 +6,7 @@
 #SBATCH --nodelist=gpu10
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=24G
+#SBATCH --mem=128G
 
 set -euo pipefail
 
@@ -32,6 +32,7 @@ if ! command -v conda >/dev/null 2>&1; then
 fi
 
 ENV_NAME="${ENV_NAME:-fyp}"
+NO_FR="${NO_FR:-0}"
 
 # Raw CDF dataset root on the cluster. Change this if your actual dataset path differs.
 DATA_ROOT="${DATA_ROOT:-/home/comp/f2256768/DF40_test_cdf}"
@@ -63,10 +64,14 @@ RUN_CLS="${RUN_CLS:-1}"
 RUN_PATCH="${RUN_PATCH:-1}"
 
 # Default runs all available CDF fake groups on this single node.
-CDF_GROUPS="${CDF_GROUPS:-EFS FR FS}"
-
-CLS_SCRIPT="${PROJECT_ROOT}/scripts/cluster/run_cdf_cls_cluster.sh"
-PATCH_SCRIPT="${PROJECT_ROOT}/scripts/cluster/run_cdf_patch_cluster.sh"
+if [ "${NO_FR}" = "1" ]; then
+  DEFAULT_CDF_GROUPS="EFS FS FE"
+else
+  DEFAULT_CDF_GROUPS="EFS FR FS"
+fi
+CDF_GROUPS="${CDF_GROUPS:-${DEFAULT_CDF_GROUPS}}"
+CLS_PREP_SCRIPT="${CDF_PACK_ROOT}/prepare_cdf_cls_clip.py"
+PATCH_PREP_SCRIPT="${CDF_PACK_ROOT}/prepare_cdf_patch_clip.py"
 
 if [ ! -d "${DATA_ROOT}" ]; then
   echo "Missing DATA_ROOT: ${DATA_ROOT}" >&2
@@ -75,6 +80,16 @@ fi
 
 if [ ! -d "${CDF_PACK_ROOT}" ]; then
   echo "Missing CDF_PACK_ROOT: ${CDF_PACK_ROOT}" >&2
+  exit 1
+fi
+
+if [ ! -f "${CLS_PREP_SCRIPT}" ]; then
+  echo "Missing CDF CLS script: ${CLS_PREP_SCRIPT}" >&2
+  exit 1
+fi
+
+if [ ! -f "${PATCH_PREP_SCRIPT}" ]; then
+  echo "Missing CDF PATCH script: ${PATCH_PREP_SCRIPT}" >&2
   exit 1
 fi
 
@@ -145,41 +160,50 @@ echo "[INFO] src_root=${SRC_ROOT}"
 echo "[INFO] model_dir=${MODEL_DIR}"
 echo "[INFO] device=${DEVICE}"
 echo "[INFO] facer_device=${FACER_DEVICE}"
+echo "[INFO] no_fr=${NO_FR}"
 echo "[INFO] run_cls=${RUN_CLS} pending_cls=${#CLS_METHODS[@]}"
 echo "[INFO] run_patch=${RUN_PATCH} pending_patch=${#PATCH_METHODS[@]}"
 
 if [ "${RUN_CLS}" = "1" ] && [ "${#CLS_METHODS[@]}" -gt 0 ]; then
-  CDF_PACK_ROOT="${CDF_PACK_ROOT}" \
-  SRC_ROOT="${SRC_ROOT}" \
-  DATA_ROOT="${DATA_ROOT}" \
-  RELATIVE_TO="${RELATIVE_TO}" \
-  OUT_CACHE_ROOT="${CLS_CACHE_ROOT}" \
-  MODEL_DIR="${MODEL_DIR}" \
-  DEVICE="${DEVICE}" \
-  BATCH_SIZE="${CLS_BATCH_SIZE}" \
-  TARGET_SIZE="${TARGET_SIZE}" \
-  LIMIT_FAKE="${LIMIT_FAKE}" \
-  SEED="${SEED}" \
-  ENV_NAME="${ENV_NAME}" \
-  bash "${CLS_SCRIPT}" "${CLS_METHODS[@]}"
+  for method_root in "${CLS_METHODS[@]}"; do
+    echo "[RUN ] CDF CLS ${method_root}"
+    conda run --no-capture-output -n "${ENV_NAME}" python "${CLS_PREP_SCRIPT}" \
+      --method-root "${method_root}" \
+      --relative-to "${RELATIVE_TO}" \
+      --cache-root "${CLS_CACHE_ROOT}" \
+      --src-root "${SRC_ROOT}" \
+      --model-dir "${MODEL_DIR}" \
+      --device "${DEVICE}" \
+      --batch-size "${CLS_BATCH_SIZE}" \
+      --target-size "${TARGET_SIZE}" \
+      --limit-fake "${LIMIT_FAKE}" \
+      --seed "${SEED}"
+  done
 fi
 
 if [ "${RUN_PATCH}" = "1" ] && [ "${#PATCH_METHODS[@]}" -gt 0 ]; then
-  CDF_PACK_ROOT="${CDF_PACK_ROOT}" \
-  SRC_ROOT="${SRC_ROOT}" \
-  DATA_ROOT="${DATA_ROOT}" \
-  RELATIVE_TO="${RELATIVE_TO}" \
-  MANIFEST_CACHE_ROOT="${CLS_CACHE_ROOT}" \
-  OUT_CACHE_ROOT="${PATCH_CACHE_ROOT}" \
-  MODEL_DIR="${MODEL_DIR}" \
-  DEVICE="${DEVICE}" \
-  BATCH_SIZE="${PATCH_BATCH_SIZE}" \
-  TARGET_SIZE="${TARGET_SIZE}" \
-  LAYER="${LAYER}" \
-  FACER_DEVICE="${FACER_DEVICE}" \
-  WITH_REGIONS="${WITH_REGIONS}" \
-  ENV_NAME="${ENV_NAME}" \
-  bash "${PATCH_SCRIPT}" "${PATCH_METHODS[@]}"
+  for method_root in "${PATCH_METHODS[@]}"; do
+    echo "[RUN ] CDF PATCH ${method_root}"
+    CMD=(
+      conda run --no-capture-output -n "${ENV_NAME}" python "${PATCH_PREP_SCRIPT}"
+      --method-root "${method_root}"
+      --relative-to "${RELATIVE_TO}"
+      --manifest-root "${CLS_CACHE_ROOT}"
+      --cache-root "${PATCH_CACHE_ROOT}"
+      --src-root "${SRC_ROOT}"
+      --model-dir "${MODEL_DIR}"
+      --backbone clip
+      --target-size "${TARGET_SIZE}"
+      --layer "${LAYER}"
+      --device "${DEVICE}"
+      --batch-size "${PATCH_BATCH_SIZE}"
+      --facer-device "${FACER_DEVICE}"
+    )
+    if [ "${WITH_REGIONS}" = "0" ]; then
+      CMD+=(--without-regions)
+    fi
+    "${CMD[@]}"
+  done
 fi
 
 echo "[DONE] CDF cache job finished."

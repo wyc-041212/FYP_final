@@ -6,7 +6,7 @@
 #SBATCH --nodelist=gpu10
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=24G
+#SBATCH --mem=128G
 
 set -euo pipefail
 
@@ -32,15 +32,35 @@ if ! command -v conda >/dev/null 2>&1; then
 fi
 
 ENV_NAME="${ENV_NAME:-fyp}"
-UPSTREAM_CHECKPOINT="${UPSTREAM_CHECKPOINT:-${PROJECT_ROOT}/checkpoints/upstream/checkpoint_best_hybrid_manifold.pt}"
-PATCH_BRANCH="${PATCH_BRANCH:-${PROJECT_ROOT}/checkpoints/downstream/patch_branch.joblib}"
-PAIR_BRANCH="${PAIR_BRANCH:-${PROJECT_ROOT}/checkpoints/downstream/pair_branch.joblib}"
-ROUTE_META_HEAD="${ROUTE_META_HEAD:-${PROJECT_ROOT}/checkpoints/heads/route_meta_head.joblib}"
+NO_FR="${NO_FR:-0}"
+
+if [ "${NO_FR}" = "1" ]; then
+  DEFAULT_UPSTREAM_CHECKPOINT="${PROJECT_ROOT}/checkpoints/upstream/checkpoint_no_fr.pt"
+  DEFAULT_PATCH_BRANCH="${PROJECT_ROOT}/checkpoints/downstream/patch_branch_no_fr.joblib"
+  DEFAULT_PAIR_BRANCH="${PROJECT_ROOT}/checkpoints/downstream/pair_branch_no_fr.joblib"
+  DEFAULT_ROUTE_META_HEAD="${PROJECT_ROOT}/checkpoints/heads/route_meta_head_no_fr.joblib"
+  DEFAULT_CDF_GROUPS="EFS FS FE"
+  DEFAULT_OUTPUT_JSON="${PROJECT_ROOT}/outputs/cdf/cdf_infer_no_fr.json"
+  DEFAULT_OUTPUT_CSV="${PROJECT_ROOT}/outputs/cdf/cdf_infer_no_fr.csv"
+else
+  DEFAULT_UPSTREAM_CHECKPOINT="${PROJECT_ROOT}/checkpoints/upstream/checkpoint_best_hybrid_manifold.pt"
+  DEFAULT_PATCH_BRANCH="${PROJECT_ROOT}/checkpoints/downstream/patch_branch.joblib"
+  DEFAULT_PAIR_BRANCH="${PROJECT_ROOT}/checkpoints/downstream/pair_branch.joblib"
+  DEFAULT_ROUTE_META_HEAD="${PROJECT_ROOT}/checkpoints/heads/route_meta_head.joblib"
+  DEFAULT_CDF_GROUPS="EFS FR FS FE"
+  DEFAULT_OUTPUT_JSON="${PROJECT_ROOT}/outputs/cdf/cdf_infer.json"
+  DEFAULT_OUTPUT_CSV="${PROJECT_ROOT}/outputs/cdf/cdf_infer.csv"
+fi
+
+UPSTREAM_CHECKPOINT="${UPSTREAM_CHECKPOINT:-${DEFAULT_UPSTREAM_CHECKPOINT}}"
+PATCH_BRANCH="${PATCH_BRANCH:-${DEFAULT_PATCH_BRANCH}}"
+PAIR_BRANCH="${PAIR_BRANCH:-${DEFAULT_PAIR_BRANCH}}"
+ROUTE_META_HEAD="${ROUTE_META_HEAD:-${DEFAULT_ROUTE_META_HEAD}}"
 
 CDF_CLS_CACHE_ROOT="${CDF_CLS_CACHE_ROOT:-/home/comp/f2256768/cdf_cache/cache_clip}"
 CDF_PATCH_CACHE_ROOT="${CDF_PATCH_CACHE_ROOT:-/tmp/f2256768/cdf_cache/cache_clip_patch}"
 CDF_SPLIT_NAME="${CDF_SPLIT_NAME:-DF40_test_cdf}"
-CDF_GROUPS="${CDF_GROUPS:-EFS FR FS FE}"
+CDF_GROUPS="${CDF_GROUPS:-${DEFAULT_CDF_GROUPS}}"
 CDF_GROUPS="${CDF_GROUPS//,/ }"
 
 SEED="${SEED:-42}"
@@ -49,8 +69,8 @@ ROUTE_BATCH_SIZE="${ROUTE_BATCH_SIZE:-2048}"
 MAX_CDF_FAKE_PER_METHOD="${MAX_CDF_FAKE_PER_METHOD:-0}"
 COMPACT_CACHE_DIR="${COMPACT_CACHE_DIR:-/tmp/f2256768/fyp_final_compact_cdf}"
 OUTPUT_DIR="${OUTPUT_DIR:-${PROJECT_ROOT}/outputs/cdf}"
-OUTPUT_JSON="${OUTPUT_JSON:-${OUTPUT_DIR}/cdf_infer.json}"
-OUTPUT_CSV="${OUTPUT_CSV:-${OUTPUT_DIR}/cdf_infer.csv}"
+OUTPUT_JSON="${OUTPUT_JSON:-${DEFAULT_OUTPUT_JSON}}"
+OUTPUT_CSV="${OUTPUT_CSV:-${DEFAULT_OUTPUT_CSV}}"
 
 mkdir -p "${OUTPUT_DIR}" "${COMPACT_CACHE_DIR}"
 
@@ -81,12 +101,14 @@ export MAX_CDF_FAKE_PER_METHOD
 export COMPACT_CACHE_DIR
 export OUTPUT_JSON
 export OUTPUT_CSV
+export NO_FR
 
 echo "[INFO] node=$(hostname)"
 echo "[INFO] cdf_cls_cache_root=${CDF_CLS_CACHE_ROOT}"
 echo "[INFO] cdf_patch_cache_root=${CDF_PATCH_CACHE_ROOT}"
 echo "[INFO] cdf_split_name=${CDF_SPLIT_NAME}"
 echo "[INFO] cdf_groups=${CDF_GROUPS}"
+echo "[INFO] no_fr=${NO_FR}"
 echo "[INFO] device=${DEVICE}"
 echo "[INFO] compact_cache_dir=${COMPACT_CACHE_DIR}"
 echo "[INFO] output_json=${OUTPUT_JSON}"
@@ -107,7 +129,6 @@ sys.path.insert(0, str(project_root / "src"))
 
 from main import load_main_runtime  # noqa: E402
 from train.train_downstream_head import (  # noqa: E402
-    HYBRID_LABELS,
     build_branch_features,
     build_prob_map,
     collect_cls_rows,
@@ -148,6 +169,8 @@ runtime = load_main_runtime(
 patch_bundle = runtime.patch_bundle
 pair_bundle = runtime.pair_bundle
 head_bundle = runtime.head_bundle
+route_gating_temperature = float(head_bundle.get("route_gating_temperature", 1.0))
+route_gating_floor = float(head_bundle.get("route_gating_floor", 0.0))
 
 cdf_cls_rows = collect_cls_rows(iter_regular_cls_rows(cdf_cls_cache_root, cdf_split_name, None))
 
@@ -193,15 +216,19 @@ for idx, path in enumerate(patch_paths):
         patch_clf=patch_bundle["patch_clf"],
         patch_group_classifiers=patch_bundle["patch_group_classifiers"],
         pair_route_mode=runtime.pair_route_mode,
+        route_gating_temperature=route_gating_temperature,
+        route_gating_floor=route_gating_floor,
     )
     fake_prob, _ = predict_route_aware_meta_fusion(
         head_bundle["route_meta_experts"],
         feats.route_prob,
         feats.meta_x,
         runtime.pair_route_mode,
+        route_gating_temperature=route_gating_temperature,
+        route_gating_floor=route_gating_floor,
     )
     pred = (fake_prob >= runtime.route_meta_threshold).astype(np.int64)
-    route_top1 = np.asarray([HYBRID_LABELS[int(i)] for i in np.argmax(feats.route_prob, axis=1)], dtype=object)
+    route_top1 = np.asarray([runtime.hybrid_labels[int(i)] for i in np.argmax(feats.route_prob, axis=1)], dtype=object)
 
     method_rows.append(
         {
@@ -220,7 +247,7 @@ for idx, path in enumerate(patch_paths):
             },
             "route_top1_counts": {
                 label: int(np.sum(route_top1 == label))
-                for label in HYBRID_LABELS
+                for label in runtime.hybrid_labels
                 if np.any(route_top1 == label)
             },
         }
@@ -256,7 +283,7 @@ summary = {
     "mean_pair_dynamic_prob": float(np.mean(pair_dynamic_all)),
     "route_top1_counts": {
         label: int(sum(1 for x in global_route_top1 if x == label))
-        for label in HYBRID_LABELS
+        for label in runtime.hybrid_labels
         if any(x == label for x in global_route_top1)
     },
 }
@@ -273,8 +300,11 @@ payload = {
         "cdf_patch_cache_root": str(cdf_patch_cache_root),
         "cdf_split_name": cdf_split_name,
         "cdf_groups": cdf_groups,
+        "no_fr": os.environ.get("NO_FR", "0") == "1",
         "compact_cache_dir": str(compact_cache_dir),
         "device": device,
+        "route_gating_temperature": route_gating_temperature,
+        "route_gating_floor": route_gating_floor,
     },
     "cdf": {
         "route_meta_fusion": {

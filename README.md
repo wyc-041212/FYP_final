@@ -1,42 +1,82 @@
 # Route Meta Fusion Pipeline
 
-This folder is the current runnable project snapshot for the selected route-aware pipeline.
+This repo is the cleaned runnable snapshot of the current `patch + pair + route_meta_fusion` pipeline.
 
-It includes:
-- the upstream checkpoint
-- the downstream checkpoints
-- the selected `route_meta_fusion` head checkpoint
-- the code needed for upstream training, downstream/head training, replay, and sample inference
+## What Matters
 
-## Contents
-
-- `checkpoints/`
-  - `upstream/`
-  - `downstream/`
-  - `heads/`
-- `cache/`
-  - `cls/`
-  - `patch/`
-  - `compact/`
-  - `sampled/`
-- `src/train/`
-  - `train_upstream.py`
-  - `train_downstream_head.py`
-- `src/prepare/`
-  - feature extraction and model-loading utilities
-- `src/eval/`
-  - legacy multi-head research code kept for reference
 - `main.py`
-  - unified entrypoint with `--mode replay` and `--mode sample`
+  - unified inference entrypoint
+  - supports `--mode replay` and `--mode sample`
+- `src/train/train_upstream.py`
+  - upstream training
+  - now supports `--no-fr`
+- `src/train/train_downstream_head.py`
+  - downstream patch/pair/head training
+  - now supports `--no-fr`
+  - `pair-region-mode` supports `no_background_keep_hair`
+- `sample/sample.py`
+  - thin wrapper around `main.py --mode sample`
+  - still referenced by `pipeline_manifest.json`, so it is kept
 
-## What This Folder Can Do
+## Checkpoints
 
-1. Train the upstream model from CLS cache.
-2. Train the downstream patch + pair + selected head pipeline.
-3. Replay `validation`, `test_ff`, and `OOD` using saved checkpoints.
-4. Run sample inference on sampled folders or directly on raw folders.
+The repo now keeps the actual runnable checkpoints under `checkpoints/`:
 
-## Replay Command
+- `checkpoints/upstream/`
+  - `checkpoint_best_hybrid_manifold.pt`
+  - `checkpoint_no_fr.pt`
+  - `summary.json`
+- `checkpoints/downstream/`
+  - `patch_branch.joblib`
+  - `pair_branch.joblib`
+  - `patch_branch_no_fr.joblib`
+  - `pair_branch_no_fr.joblib`
+- `checkpoints/heads/`
+  - `route_meta_head.joblib`
+  - `route_meta_head_meta.json`
+  - `route_meta_head_no_fr.joblib`
+  - `route_meta_head_no_fr_meta.json`
+
+Notes:
+
+- `checkpoints/upstream/summary.json` is informational only. Runtime does not need it.
+- `checkpoints/heads/route_meta_head_meta.json` is still used by `main.py --mode replay` to recover replay config, so keep it for now.
+
+## Training Modes
+
+### Full pipeline
+
+Upstream:
+
+```bash
+python /Users/wuyuchen/Desktop/FYP_final/src/train/train_upstream.py
+```
+
+Downstream:
+
+```bash
+python /Users/wuyuchen/Desktop/FYP_final/src/train/train_downstream_head.py
+```
+
+### No-FR pipeline
+
+Upstream:
+
+```bash
+python /Users/wuyuchen/Desktop/FYP_final/src/train/train_upstream.py --no-fr
+```
+
+Downstream:
+
+```bash
+python /Users/wuyuchen/Desktop/FYP_final/src/train/train_downstream_head.py \
+  --no-fr \
+  --hybrid-checkpoint /Users/wuyuchen/Desktop/FYP_final/checkpoints/upstream/checkpoint_no_fr.pt
+```
+
+## Inference
+
+Replay:
 
 ```bash
 PYTORCH_ENABLE_MPS_FALLBACK=1 conda run --no-capture-output -n fyp python \
@@ -44,33 +84,30 @@ PYTORCH_ENABLE_MPS_FALLBACK=1 conda run --no-capture-output -n fyp python \
   --mode replay
 ```
 
-## Sample Command
-
-Sample directly from raw folders:
+Sample:
 
 ```bash
 PYTORCH_ENABLE_MPS_FALLBACK=1 conda run --no-capture-output -n fyp python \
   /Users/wuyuchen/Desktop/FYP_final/main.py \
   --mode sample \
-  --data-root /Volumes/未命名/DF40 \
-  --source-dir /Volumes/未命名/DF40/FR/wav2lip/cdf/frames \
-  --num-folders 2 \
-  --max-frames-per-folder 6 \
-  --output-json /Users/wuyuchen/Desktop/tmp_wav2lip_probe_result.json
+  --sample-root /Users/wuyuchen/Desktop/tmp_probe_bundle \
+  --output-json /Users/wuyuchen/Desktop/tmp_probe_result.json
 ```
 
-Sample from an existing sampled bundle:
+## Folder Status
 
-```bash
-PYTORCH_ENABLE_MPS_FALLBACK=1 conda run --no-capture-output -n fyp python \
-  /Users/wuyuchen/Desktop/FYP_final/main.py \
-  --mode sample \
-  --sample-root /Users/wuyuchen/Desktop/tmp_wav2lip_probe \
-  --output-json /Users/wuyuchen/Desktop/tmp_wav2lip_probe_result.json
-```
+- `src/train/`
+  - active code
+- `src/prepare/`
+  - active code
+- `src/eval/`
+  - legacy / research utilities
+  - not required by the main runtime path
+- `sample/`
+  - kept because the manifest and wrapper entrypoint still use it
 
-## Important Notes
+## Current Direction
 
-- Replay depends on the existing CLS and patch cache folders on this machine.
-- Raw-folder probe uses the same patch backbone family and target size as the official patch cache pipeline: `clip` at `224`.
-- The current public-facing entrypoint is `main.py`.
+- downstream remains `patch + pair`
+- `pair` can now be trained with `no_background_keep_hair`
+- `no FR` is now a first-class training switch instead of only living in temporary scripts

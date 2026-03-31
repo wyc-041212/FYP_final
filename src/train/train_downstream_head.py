@@ -5,8 +5,10 @@ import argparse
 import json
 import sys
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
+import joblib
 import numpy as np
 import torch
 from sklearn.linear_model import LogisticRegression, SGDClassifier
@@ -24,25 +26,42 @@ from prepare.cache import (  # noqa: E402
     subset_compact_cache,
 )
 from train.train_upstream import (  # noqa: E402
-    ALL_GROUPS as HYBRID_LABELS,
     HybridManifoldModel,
 )
 from utils.device import resolve_torch_device  # noqa: E402
 
-FAKE_GROUPS = ["EFS", "FS", "FR", "FE"]
-PAIR_GROUPS = ["FS", "FR", "FE", "EFS"]
-EVAL_GROUPS = ["FS", "FR", "FE", "EFS"]
+REAL_LABEL = "REAL"
+EFS_LABEL = "EFS"
+BASE_HYBRID_LABELS = ["EFS", "FS", "FR", "FE", "REAL"]
+NO_FR_HYBRID_LABELS = ["EFS", "FS", "FE", "REAL"]
+BASE_FAKE_GROUPS = ["EFS", "FS", "FR", "FE"]
+BASE_PAIR_GROUPS = ["FS", "FR", "FE", "EFS"]
+NO_FR_FAKE_GROUPS = ["EFS", "FS", "FE"]
+NO_FR_PAIR_GROUPS = ["FS", "FE", "EFS"]
+FAKE_GROUPS = list(BASE_FAKE_GROUPS)
+PAIR_GROUPS = list(BASE_PAIR_GROUPS)
+EVAL_GROUPS = list(BASE_FAKE_GROUPS)
 CANONICAL_REGIONS = {
     "FS": ["eyebrow", "skin"],
     "FR": ["skin", "nose"],
     "FE": ["eye", "mouth"],
     "EFS": ["eye", "mouth", "eyebrow"],
 }
-REAL_LABEL = "REAL"
+HYBRID_LABELS = list(BASE_HYBRID_LABELS)
 REAL_IDX = HYBRID_LABELS.index(REAL_LABEL)
 FAKE_ROUTE_IDXS = [HYBRID_LABELS.index(group) for group in FAKE_GROUPS]
 EPS = 1e-8
 VOLUME_PREFIX = "/Volumes/未命名"
+
+
+def configure_group_scheme(no_fr: bool, hybrid_labels: list[str] | None = None) -> None:
+    global FAKE_GROUPS, PAIR_GROUPS, EVAL_GROUPS, HYBRID_LABELS, REAL_IDX, FAKE_ROUTE_IDXS
+    FAKE_GROUPS = list(NO_FR_FAKE_GROUPS if no_fr else BASE_FAKE_GROUPS)
+    PAIR_GROUPS = list(NO_FR_PAIR_GROUPS if no_fr else BASE_PAIR_GROUPS)
+    EVAL_GROUPS = list(FAKE_GROUPS)
+    HYBRID_LABELS = list(hybrid_labels or (NO_FR_HYBRID_LABELS if no_fr else BASE_HYBRID_LABELS))
+    REAL_IDX = HYBRID_LABELS.index(REAL_LABEL)
+    FAKE_ROUTE_IDXS = [HYBRID_LABELS.index(group) for group in FAKE_GROUPS]
 
 
 @dataclass(frozen=True)
@@ -219,10 +238,13 @@ def discover_flat_method_caches(cache_root: Path, split: str, groups: list[str])
     return paths
 
 
-def discover_ood_method_entries(cache_root: Path) -> list[tuple[str, str, Path, Path]]:
+def discover_ood_method_entries(
+    cache_root: Path,
+    groups: list[str] | None = None,
+) -> list[tuple[str, str, Path, Path]]:
     entries = []
     split_root = cache_root / "DF40_test_ood"
-    for group in EVAL_GROUPS:
+    for group in groups or EVAL_GROUPS:
         group_dir = split_root / group
         if not group_dir.exists():
             continue
@@ -294,14 +316,37 @@ def collect_cls_rows(rows) -> ClsRows:
     return ClsRows(keys=np.asarray(keys, dtype=object), x=np.stack(vecs).astype(np.float32))
 
 
+def checkpoint_group_settings(checkpoint: dict) -> tuple[list[str], list[str]]:
+    settings = checkpoint.get("settings")
+    labels = None
+    pair_groups = None
+    if isinstance(settings, dict):
+        raw_labels = settings.get("labels")
+        raw_pair_groups = settings.get("pair_groups")
+        if raw_labels is not None:
+            labels = [str(label) for label in raw_labels]
+        if raw_pair_groups is not None:
+            pair_groups = [str(group) for group in raw_pair_groups]
+    if labels is None:
+        raw_classes = checkpoint.get("classes")
+        if raw_classes is not None:
+            labels = [str(label) for label in np.asarray(raw_classes, dtype=object).tolist()]
+        else:
+            labels = list(BASE_HYBRID_LABELS)
+    if pair_groups is None:
+        pair_groups = [group for group in labels if group not in {EFS_LABEL, REAL_LABEL}]
+    return labels, pair_groups
+
+
 def load_hybrid_checkpoint(
     checkpoint_path: Path,
     device: torch.device,
-) -> tuple[HybridManifoldModel, np.ndarray, np.ndarray, float, float]:
+) -> tuple[HybridManifoldModel, np.ndarray, np.ndarray, float, float, list[str]]:
     checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
     dim = int(checkpoint["dim"])
     real_rank = int(checkpoint["real_rank"])
     efs_rank = int(checkpoint["efs_rank"])
+    labels, pair_groups = checkpoint_group_settings(checkpoint)
     model = HybridManifoldModel(
         dim=dim,
         real_rank=real_rank,
@@ -310,8 +355,10 @@ def load_hybrid_checkpoint(
         efs_center_init=np.zeros(dim, dtype=np.float32),
         real_basis_init=np.zeros((dim, real_rank), dtype=np.float32),
         efs_basis_init=np.zeros((dim, efs_rank), dtype=np.float32),
-        fake_offset_init=np.zeros((3, dim), dtype=np.float32),
-        delta_proto_init=np.zeros((3, dim), dtype=np.float32),
+        fake_offset_init=np.zeros((len(pair_groups), dim), dtype=np.float32),
+        delta_proto_init=np.zeros((len(pair_groups), dim), dtype=np.float32),
+        labels=labels,
+        pair_groups=pair_groups,
     ).to(device)
     model.load_state_dict(checkpoint["state_dict"])
     model.eval()
@@ -321,6 +368,7 @@ def load_hybrid_checkpoint(
         checkpoint["std"].astype(np.float32),
         float(checkpoint["temperature"]),
         float(checkpoint["alpha"]),
+        labels,
     )
 
 
@@ -497,6 +545,9 @@ def build_pair_region_names_by_group(region_names: list[str], mode: str) -> dict
         return {group: list(region_names) for group in PAIR_GROUPS}
     if mode == "canonical":
         return {group: list(CANONICAL_REGIONS[group]) for group in PAIR_GROUPS}
+    if mode == "no_background_keep_hair":
+        keep = [name for name in region_names if name != "background"]
+        return {group: list(keep) for group in PAIR_GROUPS}
     raise ValueError(f"Unknown pair-region mode: {mode}")
 
 
@@ -517,7 +568,8 @@ def train_pair_branch(
         args.pair_region_mode,
     )
     real_delta = sanitize_feature_matrix(real_ref["region_vecs"] - real_pool_means[None, :, :])
-    shared_paired_fake, shared_paired_real = collect_paired_data(all_methods, ["FS", "FR", "FE"])
+    shared_pair_groups = [group for group in ["FS", "FR", "FE"] if group in FAKE_GROUPS]
+    shared_paired_fake, shared_paired_real = collect_paired_data(all_methods, shared_pair_groups)
     shared_mean_dirs = compute_mean_delta_directions(
         shared_paired_fake.astype(np.float32),
         shared_paired_real.astype(np.float32),
@@ -575,26 +627,70 @@ def pair_score_matrix(
     return out
 
 
-def dynamic_expert_score(route_prob: np.ndarray, expert_scores: np.ndarray, mode: str) -> np.ndarray:
+def softened_fake_route_weights(
+    route_prob: np.ndarray,
+    *,
+    temperature: float = 1.0,
+    floor: float = 0.0,
+) -> np.ndarray:
+    fake_prob = np.clip(route_prob[:, FAKE_ROUTE_IDXS].astype(np.float32), 1e-8, 1.0)
+    temp = max(float(temperature), 1e-4)
+    log_prob = np.log(fake_prob) / temp
+    log_prob = log_prob - np.max(log_prob, axis=1, keepdims=True)
+    weights = np.exp(log_prob).astype(np.float32)
+    weights = weights / np.clip(weights.sum(axis=1, keepdims=True), 1e-8, None)
+    floor_value = float(np.clip(floor, 0.0, 0.24))
+    if floor_value > 0.0:
+        uniform = np.full_like(weights, 1.0 / weights.shape[1], dtype=np.float32)
+        weights = ((1.0 - floor_value) * weights + floor_value * uniform).astype(np.float32)
+        weights = weights / np.clip(weights.sum(axis=1, keepdims=True), 1e-8, None)
+    return weights.astype(np.float32)
+
+
+def dynamic_expert_score(
+    route_prob: np.ndarray,
+    expert_scores: np.ndarray,
+    mode: str,
+    *,
+    route_gating_temperature: float = 1.0,
+    route_gating_floor: float = 0.0,
+) -> np.ndarray:
     weights = route_prob[:, FAKE_ROUTE_IDXS]
+    smooth_weights = softened_fake_route_weights(
+        route_prob,
+        temperature=route_gating_temperature,
+        floor=route_gating_floor,
+    )
     if mode == "weighted":
         return np.sum(weights * expert_scores, axis=1).astype(np.float32)
     if mode == "weighted_norm":
-        norm = np.clip(weights.sum(axis=1, keepdims=True), 1e-8, None)
-        return np.sum((weights / norm) * expert_scores, axis=1).astype(np.float32)
-    top1 = np.argmax(weights, axis=1)
+        return np.sum(smooth_weights * expert_scores, axis=1).astype(np.float32)
+    top1 = np.argmax(smooth_weights, axis=1)
     if mode == "top1":
         return expert_scores[np.arange(len(expert_scores)), top1].astype(np.float32)
     if mode == "top2":
-        top2 = np.argsort(-weights, axis=1)[:, :2]
-        mix = np.take_along_axis(weights, top2, axis=1)
+        top2 = np.argsort(-smooth_weights, axis=1)[:, :2]
+        mix = np.take_along_axis(smooth_weights, top2, axis=1)
         mix = mix / np.clip(mix.sum(axis=1, keepdims=True), 1e-8, None)
         return np.sum(np.take_along_axis(expert_scores, top2, axis=1) * mix, axis=1).astype(np.float32)
     raise ValueError(f"Unknown expert route mode: {mode}")
 
 
-def dynamic_pair_score(route_prob: np.ndarray, pair_scores: np.ndarray, mode: str) -> np.ndarray:
-    return dynamic_expert_score(route_prob, pair_scores, mode)
+def dynamic_pair_score(
+    route_prob: np.ndarray,
+    pair_scores: np.ndarray,
+    mode: str,
+    *,
+    route_gating_temperature: float = 1.0,
+    route_gating_floor: float = 0.0,
+) -> np.ndarray:
+    return dynamic_expert_score(
+        route_prob,
+        pair_scores,
+        mode,
+        route_gating_temperature=route_gating_temperature,
+        route_gating_floor=route_gating_floor,
+    )
 
 
 def build_meta_features(
@@ -602,10 +698,16 @@ def build_meta_features(
     pair_scores: np.ndarray,
     patch_scores: np.ndarray,
     patch_global_prob: np.ndarray,
+    *,
+    route_gating_temperature: float = 1.0,
+    route_gating_floor: float = 0.0,
 ) -> np.ndarray:
     fake_route = route_prob[:, FAKE_ROUTE_IDXS].astype(np.float32)
-    fake_sum = np.clip(fake_route.sum(axis=1, keepdims=True), 1e-8, None)
-    fake_route_norm = fake_route / fake_sum
+    fake_route_norm = softened_fake_route_weights(
+        route_prob,
+        temperature=route_gating_temperature,
+        floor=route_gating_floor,
+    )
     route_fake = route_fake_score(route_prob)[:, None]
     pair_dynamic = np.sum(fake_route_norm * pair_scores, axis=1, keepdims=True).astype(np.float32)
     patch_dynamic = np.sum(fake_route_norm * patch_scores, axis=1, keepdims=True).astype(np.float32)
@@ -649,13 +751,21 @@ def build_branch_features(
     patch_clf,
     patch_group_classifiers: dict[str, tuple[StandardScaler, LogisticRegression]],
     pair_route_mode: str,
+    route_gating_temperature: float,
+    route_gating_floor: float,
 ) -> BranchFeatures:
     x = image_region_delta_features(cache, real_pool_means)
     patch_prob = predict_patch_scores(patch_scaler, patch_clf, x)
     route_prob = route_prob_from_map(route_map, cache.img_id.astype(object))
     route_score = route_fake_score(route_prob)
     patch_scores = predict_group_binary_experts(patch_group_classifiers, x)
-    route_patch_score = dynamic_expert_score(route_prob, patch_scores, pair_route_mode)
+    route_patch_score = dynamic_expert_score(
+        route_prob,
+        patch_scores,
+        pair_route_mode,
+        route_gating_temperature=route_gating_temperature,
+        route_gating_floor=route_gating_floor,
+    )
     pair_scores = pair_score_matrix(
         cache.region_vecs.astype(np.float32),
         real_pool_means,
@@ -664,8 +774,21 @@ def build_branch_features(
         pair_region_idx,
         pair_region_names_by_group,
     )
-    pair_score = dynamic_pair_score(route_prob, pair_scores, pair_route_mode)
-    meta_x = build_meta_features(route_prob, pair_scores, patch_scores, patch_prob)
+    pair_score = dynamic_pair_score(
+        route_prob,
+        pair_scores,
+        pair_route_mode,
+        route_gating_temperature=route_gating_temperature,
+        route_gating_floor=route_gating_floor,
+    )
+    meta_x = build_meta_features(
+        route_prob,
+        pair_scores,
+        patch_scores,
+        patch_prob,
+        route_gating_temperature=route_gating_temperature,
+        route_gating_floor=route_gating_floor,
+    )
     return BranchFeatures(
         x=x,
         route_prob=route_prob,
@@ -758,12 +881,21 @@ def predict_route_aware_meta_fusion(
     route_prob: np.ndarray,
     x: np.ndarray,
     mode: str,
+    *,
+    route_gating_temperature: float = 1.0,
+    route_gating_floor: float = 0.0,
 ) -> tuple[np.ndarray, np.ndarray]:
     expert_prob = np.zeros((len(x), len(FAKE_GROUPS)), dtype=np.float32)
     for idx, group in enumerate(FAKE_GROUPS):
         scaler, clf = experts[group]
         expert_prob[:, idx] = predict_meta_fusion(scaler, clf, x)
-    mixed = dynamic_expert_score(route_prob, expert_prob, mode)
+    mixed = dynamic_expert_score(
+        route_prob,
+        expert_prob,
+        mode,
+        route_gating_temperature=route_gating_temperature,
+        route_gating_floor=route_gating_floor,
+    )
     return mixed.astype(np.float32), expert_prob.astype(np.float32)
 
 
@@ -831,6 +963,11 @@ def summarize_method_rows(rows: list[dict]) -> dict:
     return {"summary": summarize_split(rows), "methods": sorted(rows, key=lambda row: (row["group"], row["method"]))}
 
 
+def summarize_method_rows_for_groups(rows: list[dict], groups: list[str]) -> dict:
+    group_set = set(groups)
+    return summarize_method_rows([row for row in rows if row["group"] in group_set])
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Single-head downstream pipeline: patch + pair + route_meta_fusion."
@@ -849,19 +986,46 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-train-fake-per-method", type=int, default=0)
     parser.add_argument("--max-test-fake-per-method", type=int, default=0)
     parser.add_argument("--max-ood-fake-per-method", type=int, default=0)
-    parser.add_argument("--patch-train-groups", nargs="*", default=["FS", "FR", "FE", "EFS"])
+    parser.add_argument("--patch-train-groups", nargs="*", default=None)
     parser.add_argument("--route-batch-size", type=int, default=2048)
     parser.add_argument("--val-ratio", type=float, default=0.2)
     parser.add_argument("--val-split-mode", choices=["within_method", "holdout_method"], default="holdout_method")
     parser.add_argument("--pair-ridge-alpha", type=float, default=1.0)
     parser.add_argument("--device", default="auto")
-    parser.add_argument("--pair-region-mode", choices=["canonical", "all_regions"], default="all_regions")
+    parser.add_argument(
+        "--no-fr",
+        action="store_true",
+        help="Train the downstream pipeline without FR, using EFS/FS/FE fake targets.",
+    )
+    parser.add_argument(
+        "--pair-region-mode",
+        choices=["canonical", "all_regions", "no_background_keep_hair"],
+        default="no_background_keep_hair",
+    )
     parser.add_argument("--pair-feature-mode", choices=["cosnorm"], default="cosnorm")
     parser.add_argument("--pair-pca-dim", type=int, default=32)
     parser.add_argument("--pair-route-mode", choices=["weighted", "weighted_norm", "top1", "top2"], default="weighted")
+    parser.add_argument("--route-gating-temperature", type=float, default=1.0)
+    parser.add_argument("--route-gating-floor", type=float, default=0.0)
     parser.add_argument("--compact-cache-dir", type=Path, default=ROOT / "cache" / "compact")
+    parser.add_argument("--output-patch-branch", type=Path)
+    parser.add_argument("--output-pair-branch", type=Path)
+    parser.add_argument("--output-route-meta-head", type=Path)
+    parser.add_argument("--output-head-meta", type=Path)
     parser.add_argument("--output-json", type=Path, default=ROOT / "outputs" / "route_meta_pipeline.json")
-    return parser.parse_args()
+    args = parser.parse_args()
+    configure_group_scheme(args.no_fr)
+    if args.patch_train_groups is None:
+        args.patch_train_groups = list(FAKE_GROUPS)
+    if args.output_patch_branch is None:
+        args.output_patch_branch = ROOT / "checkpoints" / "downstream" / ("patch_branch_no_fr.joblib" if args.no_fr else "patch_branch.joblib")
+    if args.output_pair_branch is None:
+        args.output_pair_branch = ROOT / "checkpoints" / "downstream" / ("pair_branch_no_fr.joblib" if args.no_fr else "pair_branch.joblib")
+    if args.output_route_meta_head is None:
+        args.output_route_meta_head = ROOT / "checkpoints" / "heads" / ("route_meta_head_no_fr.joblib" if args.no_fr else "route_meta_head.joblib")
+    if args.output_head_meta is None:
+        args.output_head_meta = ROOT / "checkpoints" / "heads" / ("route_meta_head_no_fr_meta.json" if args.no_fr else "route_meta_head_meta.json")
+    return args
 
 
 def evaluate_regular_route_meta(
@@ -893,12 +1057,16 @@ def evaluate_regular_route_meta(
         patch_clf=patch_clf,
         patch_group_classifiers=patch_group_classifiers,
         pair_route_mode=args.pair_route_mode,
+        route_gating_temperature=args.route_gating_temperature,
+        route_gating_floor=args.route_gating_floor,
     )
     real_prob, _ = predict_route_aware_meta_fusion(
         route_meta_experts,
         real_features.route_prob,
         real_features.meta_x,
         args.pair_route_mode,
+        route_gating_temperature=args.route_gating_temperature,
+        route_gating_floor=args.route_gating_floor,
     )
     real_idx = np.arange(min(len(real_prob), 2000))
 
@@ -922,12 +1090,16 @@ def evaluate_regular_route_meta(
             patch_clf=patch_clf,
             patch_group_classifiers=patch_group_classifiers,
             pair_route_mode=args.pair_route_mode,
+            route_gating_temperature=args.route_gating_temperature,
+            route_gating_floor=args.route_gating_floor,
         )
         fake_prob, _ = predict_route_aware_meta_fusion(
             route_meta_experts,
             fake_features.route_prob,
             fake_features.meta_x,
             args.pair_route_mode,
+            route_gating_temperature=args.route_gating_temperature,
+            route_gating_floor=args.route_gating_floor,
         )
         rows.append(
             {
@@ -981,6 +1153,8 @@ def evaluate_ood_route_meta(
             patch_clf=patch_clf,
             patch_group_classifiers=patch_group_classifiers,
             pair_route_mode=args.pair_route_mode,
+            route_gating_temperature=args.route_gating_temperature,
+            route_gating_floor=args.route_gating_floor,
         )
         real_features = build_branch_features(
             real_cache,
@@ -994,18 +1168,24 @@ def evaluate_ood_route_meta(
             patch_clf=patch_clf,
             patch_group_classifiers=patch_group_classifiers,
             pair_route_mode=args.pair_route_mode,
+            route_gating_temperature=args.route_gating_temperature,
+            route_gating_floor=args.route_gating_floor,
         )
         fake_prob, _ = predict_route_aware_meta_fusion(
             route_meta_experts,
             fake_features.route_prob,
             fake_features.meta_x,
             args.pair_route_mode,
+            route_gating_temperature=args.route_gating_temperature,
+            route_gating_floor=args.route_gating_floor,
         )
         real_prob, _ = predict_route_aware_meta_fusion(
             route_meta_experts,
             real_features.route_prob,
             real_features.meta_x,
             args.pair_route_mode,
+            route_gating_temperature=args.route_gating_temperature,
+            route_gating_floor=args.route_gating_floor,
         )
         rows.append(
             {
@@ -1089,7 +1269,12 @@ def main() -> None:
     patch_group_classifiers = fit_group_binary_experts(train_fake_x, np.concatenate(train_fake_groups), train_real_x, args.seed)
     patch_train_scores = predict_group_binary_experts(patch_group_classifiers, train_x)
 
-    hybrid_model, hybrid_mean, hybrid_std, hybrid_temperature, hybrid_alpha = load_hybrid_checkpoint(args.hybrid_checkpoint, device)
+    hybrid_model, hybrid_mean, hybrid_std, hybrid_temperature, hybrid_alpha, hybrid_labels = load_hybrid_checkpoint(args.hybrid_checkpoint, device)
+    if list(hybrid_labels) != list(HYBRID_LABELS):
+        raise ValueError(
+            f"Hybrid checkpoint labels {hybrid_labels} do not match downstream group scheme {HYBRID_LABELS}. "
+            "Pass --no-fr when using a no-FR upstream checkpoint."
+        )
     train_cls_rows = collect_cls_rows(iter_regular_cls_rows(args.cls_cache_root, "DF40_train", args.train_real_cls_cache))
     test_cls_rows = collect_cls_rows(iter_regular_cls_rows(args.cls_cache_root, "DF40_test_ff", args.test_real_cls_cache))
     ood_cls_rows = collect_cls_rows(iter_ood_cls_rows(args.cls_cache_root, "DF40_test_ood"))
@@ -1129,7 +1314,14 @@ def main() -> None:
         pair_region_names_by_group,
     )
 
-    train_meta_x = build_meta_features(train_route_prob_mat, train_pair_scores, patch_train_scores, patch_train_prob)
+    train_meta_x = build_meta_features(
+        train_route_prob_mat,
+        train_pair_scores,
+        patch_train_scores,
+        patch_train_prob,
+        route_gating_temperature=args.route_gating_temperature,
+        route_gating_floor=args.route_gating_floor,
+    )
     route_meta_experts, route_meta_search = fit_route_aware_meta_experts(
         train_meta_x,
         train_y,
@@ -1143,11 +1335,14 @@ def main() -> None:
         train_route_prob_mat[val_idx],
         train_meta_x[val_idx],
         args.pair_route_mode,
+        route_gating_temperature=args.route_gating_temperature,
+        route_gating_floor=args.route_gating_floor,
     )
     threshold_choice = search_threshold(train_y[val_idx], val_route_meta_prob)
 
+    eval_groups = list(BASE_FAKE_GROUPS) if args.no_fr else list(EVAL_GROUPS)
     test_ff = evaluate_regular_route_meta(
-        discover_flat_method_caches(args.patch_cache_root, "DF40_test_ff", ["FS", "FR", "FE", "EFS"]),
+        discover_flat_method_caches(args.patch_cache_root, "DF40_test_ff", eval_groups),
         test_real_cache,
         args=args,
         route_map=test_route_map,
@@ -1163,7 +1358,7 @@ def main() -> None:
         route_meta_threshold=float(threshold_choice["threshold"]),
     )
     ood = evaluate_ood_route_meta(
-        discover_ood_method_entries(args.patch_cache_root),
+        discover_ood_method_entries(args.patch_cache_root, eval_groups),
         args=args,
         route_map=ood_route_map,
         real_pool_means=real_pool_means,
@@ -1177,6 +1372,16 @@ def main() -> None:
         route_meta_experts=route_meta_experts,
         route_meta_threshold=float(threshold_choice["threshold"]),
     )
+    output_test_ff = test_ff
+    output_ood = ood
+    extra_summaries: dict[str, dict] = {}
+    if args.no_fr:
+        extra_summaries = {
+            "test_ff_nonfr": summarize_method_rows_for_groups(test_ff["methods"], list(FAKE_GROUPS)),
+            "test_ff_fr": summarize_method_rows_for_groups(test_ff["methods"], ["FR"]),
+            "ood_nonfr": summarize_method_rows_for_groups(ood["methods"], list(FAKE_GROUPS)),
+            "ood_fr": summarize_method_rows_for_groups(ood["methods"], ["FR"]),
+        }
 
     output = {
         "config": {
@@ -1189,9 +1394,18 @@ def main() -> None:
             "pair_pca_dim": args.pair_pca_dim,
             "pair_ridge_alpha": args.pair_ridge_alpha,
             "pair_route_mode": args.pair_route_mode,
+            "route_gating_temperature": args.route_gating_temperature,
+            "route_gating_floor": args.route_gating_floor,
             "patch_train_groups": list(args.patch_train_groups),
             "val_split_mode": args.val_split_mode,
+            "no_fr": bool(args.no_fr),
+            "labels": list(HYBRID_LABELS),
             "seed": args.seed,
+            "train_real_max": args.train_real_max,
+            "eval_real_max": args.eval_real_max,
+            "max_train_fake_per_method": args.max_train_fake_per_method,
+            "route_batch_size": args.route_batch_size,
+            "val_ratio": args.val_ratio,
         },
         "pair_region_names_by_group": pair_region_names_by_group,
         "route_meta_fusion_search": route_meta_search,
@@ -1205,12 +1419,56 @@ def main() -> None:
             "route_meta_fusion": threshold_choice["balanced_accuracy"],
         },
         "test_ff": {
-            "route_meta_fusion": test_ff,
+            "route_meta_fusion": output_test_ff,
         },
         "ood": {
-            "route_meta_fusion": ood,
+            "route_meta_fusion": output_ood,
         },
     }
+    for key, value in extra_summaries.items():
+        output[key] = {"route_meta_fusion": value}
+    patch_bundle = {
+        "patch_scaler": patch_scaler,
+        "patch_clf": patch_clf,
+        "patch_group_classifiers": patch_group_classifiers,
+    }
+    pair_bundle = {
+        "pair_mean_dirs": pair_mean_dirs,
+        "pair_classifiers": pair_classifiers,
+        "pair_region_idx": pair_region_idx,
+        "pair_region_names_by_group": pair_region_names_by_group,
+        "real_pool_means": real_pool_means,
+        "region_names": np.asarray(real_ref["region_names"], dtype=object),
+    }
+    head_bundle = {
+        "route_meta_experts": route_meta_experts,
+        "route_meta_threshold": float(threshold_choice["threshold"]),
+        "pair_route_mode": args.pair_route_mode,
+        "route_gating_temperature": float(args.route_gating_temperature),
+        "route_gating_floor": float(args.route_gating_floor),
+    }
+    head_meta = {
+        "date": str(date.today()),
+        "variant": "no_fr" if args.no_fr else "full",
+        "default_threshold": float(threshold_choice["threshold"]),
+        "pair_route_mode": args.pair_route_mode,
+        "route_gating_temperature": float(args.route_gating_temperature),
+        "route_gating_floor": float(args.route_gating_floor),
+        "config": output["config"],
+        "source": "src/train/train_downstream_head.py",
+    }
+    for path in [
+        args.output_patch_branch,
+        args.output_pair_branch,
+        args.output_route_meta_head,
+        args.output_head_meta,
+        args.output_json,
+    ]:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(patch_bundle, args.output_patch_branch)
+    joblib.dump(pair_bundle, args.output_pair_branch)
+    joblib.dump(head_bundle, args.output_route_meta_head)
+    args.output_head_meta.write_text(json.dumps(head_meta, indent=2))
     args.output_json.parent.mkdir(parents=True, exist_ok=True)
     args.output_json.write_text(json.dumps(output, indent=2))
     print(
@@ -1225,6 +1483,10 @@ def main() -> None:
         )
     )
     print(f"Saved to {args.output_json}")
+    print(f"Saved patch branch to {args.output_patch_branch}")
+    print(f"Saved pair branch to {args.output_pair_branch}")
+    print(f"Saved route_meta head to {args.output_route_meta_head}")
+    print(f"Saved head meta to {args.output_head_meta}")
 
 
 if __name__ == "__main__":
