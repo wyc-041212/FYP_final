@@ -1,0 +1,48 @@
+{
+  "date": "2026-04-05",
+  "variant": "full_patch_normal_pair_canonical",
+  "default_threshold": 0.2,
+  "pair_route_mode": "weighted",
+  "route_gating_temperature": 1.0,
+  "route_gating_floor": 0.0,
+  "config": {
+    "patch_cache_root": "/Users/wuyuchen/Desktop/FYP_final/cache/patch",
+    "cls_cache_root": "/Users/wuyuchen/Desktop/FYP_final/cache/cls",
+    "real_reference_cache": "/Users/wuyuchen/Desktop/FYP_final/cache/patch/DF40_train/REAL/patch_real_pool_region_reference.npz",
+    "hybrid_checkpoint": "/Users/wuyuchen/Desktop/FYP_final/checkpoints/upstream/checkpoint_best_hybrid_manifold.pt",
+    "pair_feature_mode": "cosnorm",
+    "pair_region_mode": "canonical",
+    "pair_pca_dim": 32,
+    "pair_ridge_alpha": 1.0,
+    "pair_route_mode": "weighted",
+    "route_gating_temperature": 1.0,
+    "route_gating_floor": 0.0,
+    "patch_train_groups": [
+      "EFS",
+      "FS",
+      "FR",
+      "FE"
+    ],
+    "val_split_mode": "holdout_method",
+    "no_fr": false,
+    "labels": [
+      "EFS",
+      "FS",
+      "FR",
+      "FE",
+      "REAL"
+    ],
+    "seed": 42,
+    "train_real_max": 0,
+    "eval_real_max": 2000,
+    "max_train_fake_per_method": 0,
+    "route_batch_size": 2048,
+    "val_ratio": 0.2,
+    "load_patch_branch": "/Users/wuyuchen/Desktop/FYP_final/checkpoints/downstream/patch_branch.joblib",
+    "load_pair_branch": null,
+    "variant_name": "full_patch_normal_pair_canonical"
+  },
+  "source": "src/train/train_downstream_head.py",
+  "branch_reuse_mode": "reuse_patch_retrain_pair",
+  "patch_branch_source": "/Users/wuyuchen/Desktop/FYP_final/checkpoints/downstream/patch_branch.joblib"
+}

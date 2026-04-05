@@ -1,0 +1,113 @@
+/data/fyp/
+├── datasets/
+│   ├── df40/
+│   │   ├── train/                                    (/original DF40_train data; local clean path not yet unified, tar/archive line on cluster: /tmp/f2256768/df40_tmp/DF40_train.tar)
+│   │   ├── test_ff/                                  (/original DF40_test_ff data; local clean path not yet unified, tar/archive line on cluster: /tmp/f2256768/df40_tmp/DF40_test_ff.tar)
+│   │   └── test_ood/                                 (/original DF40_test_ood data; local clean path not yet unified, tar/archive line on cluster: /tmp/f2256768/df40_tmp/DF40_test_ood.tar)
+│   │
+│   ├── cdf_real/
+│   │   └── DF40_test_cdf/                            (/tmp/f2256768/DF40_test_cdf on cluster)
+│   │
+│   ├── external_real/
+│   │   ├── celeb_real/                               (/Users/wuyuchen/Desktop/real/manifest_Celeb-real.csv + cls_Celeb-real.npz + patch_Celeb-real.npz locally; fuller cluster line under /tmp/celebdf_real_clip and /tmp/f2256768/celebdf_real_outputs)
+│   │   └── youtube_real/                             (/Users/wuyuchen/Desktop/real/manifest_YouTube-real.csv + cls_YouTube-real.npz + patch_YouTube-real.npz locally)
+│   │
+│   └── probes/
+│       ├── tiktok/                                   (/Users/wuyuchen/Desktop/tiktok)
+│       ├── animations/                               (path to confirm; correct folder name is `animations`)
+│       └── kobe_test/                                (path to confirm; correct folder name is `kobe_test`)
+│
+├── cache/
+│   ├── cls/
+│   │   ├── df40/
+│   │   │   ├── train/                                (/Volumes/未命名/cache_clip/DF40_train via /Users/wuyuchen/Desktop/FYP_final/cache/cls/DF40_train)
+│   │   │   ├── test_ff/                              (/Volumes/未命名/cache_clip/DF40_test_ff via /Users/wuyuchen/Desktop/FYP_final/cache/cls/DF40_test_ff)
+│   │   │   └── test_ood/                             (/Volumes/未命名/cache_clip/DF40_test_ood via /Users/wuyuchen/Desktop/FYP_final/cache/cls/DF40_test_ood)
+│   │   │
+│   │   ├── cdf_real/
+│   │   │   └── test_cdf/                             (/home/comp/f2256768/cdf_cache/cache_clip/DF40_test_cdf on cluster; local clean mainline entry does not expose full downstream CDF line)
+│   │   │
+│   │   └── external_real/
+│   │       ├── celeb_real/                           (/Users/wuyuchen/Desktop/real/cls_Celeb-real.npz locally; cluster line also exists under /tmp/celebdf_real_clip/cache_clip/Celeb-DF-v2/real)
+│   │       └── youtube_real/                         (/Users/wuyuchen/Desktop/real/cls_YouTube-real.npz locally)
+│   │
+│   ├── patch/
+│   │   ├── df40/
+│   │   │   ├── train/                                (/Volumes/未命名/cache_clip_patch/DF40_train via /Users/wuyuchen/Desktop/FYP_final/cache/patch/DF40_train)
+│   │   │   ├── test_ff/                              (/Volumes/未命名/cache_clip_patch/DF40_test_ff via /Users/wuyuchen/Desktop/FYP_final/cache/patch/DF40_test_ff)
+│   │   │   └── test_ood/                             (/Volumes/未命名/cache_clip_patch/DF40_test_ood via /Users/wuyuchen/Desktop/FYP_final/cache/patch/DF40_test_ood)
+│   │   │
+│   │   ├── cdf_real/
+│   │   │   └── test_cdf/                             (/tmp/f2256768/cdf_cache/cache_clip_patch/DF40_test_cdf on cluster)
+│   │   │
+│   │   └── external_real/
+│   │       ├── celeb_real/                           (/Users/wuyuchen/Desktop/real/patch_Celeb-real.npz locally; cluster line also exists under /tmp/celebdf_real_clip/cache_clip_patch/Celeb-DF-v2/real)
+│   │       └── youtube_real/                         (/Users/wuyuchen/Desktop/real/patch_YouTube-real.npz locally)
+│   │
+│   └── compact/
+│       ├── df40/                                     (/Users/wuyuchen/Desktop/FYP_final_backup/cache/compact via /Users/wuyuchen/Desktop/FYP_final/cache/compact)
+│       ├── cdf_real/                                 (/tmp/f2256768/fyp_final_compact_cdf on cluster)
+│       └── external_real/
+│           └── celeb_real/                           (/tmp/f2256768/fyp_final_compact_celebdf_real on cluster)
+│
+├── checkpoints/
+│   ├── upstream/
+│   │   ├── full/                                     (/Users/wuyuchen/Desktop/FYP_final/checkpoints/upstream/checkpoint_best_hybrid_manifold.pt)
+│   │   └── no_fr/                                    (/Users/wuyuchen/Desktop/FYP_final/checkpoints/upstream/checkpoint_no_fr.pt)
+│   │
+│   ├── downstream/
+│   │   ├── full/
+│   │   │   ├── patch/                                (/Users/wuyuchen/Desktop/FYP_final/checkpoints/downstream/patch_branch.joblib)
+│   │   │   └── pair/                                 (/Users/wuyuchen/Desktop/FYP_final/checkpoints/downstream/pair_branch.joblib)
+│   │   │
+│   │   ├── no_fr/
+│   │   │   ├── patch/                                (/Users/wuyuchen/Desktop/FYP_final/checkpoints/downstream/patch_branch_no_fr.joblib)
+│   │   │   └── pair/                                 (/Users/wuyuchen/Desktop/FYP_final/checkpoints/downstream/pair_branch_no_fr.joblib)
+│   │   │
+│   │   └── ablation_variants/
+│   │       ├── pair_no_bg_keep_hair/                 (/Users/wuyuchen/Desktop/FYP_final/checkpoints/downstream/pair_branch_no_fr_no_bg_keep_hair.joblib)
+│   │       └── patch_no_bg_keep_hair_old/            (/Users/wuyuchen/Desktop/FYP_final/checkpoints/downstream/patch_branch_no_fr_no_bg_keep_hair.joblib ; historical, not the intended final pair-only no-bg variant)
+│   │
+│   └── heads/
+│       ├── full/                                     (/Users/wuyuchen/Desktop/FYP_final/checkpoints/heads/route_meta_head.joblib)
+│       ├── no_fr/                                    (/Users/wuyuchen/Desktop/FYP_final/checkpoints/heads/route_meta_head_no_fr.joblib)
+│       ├── no_fr_no_bg_keep_hair_old/                (/Users/wuyuchen/Desktop/FYP_final/checkpoints/heads/route_meta_head_no_fr_no_bg_keep_hair.joblib ; historical, trained on the wrong patch+pair combination)
+│       └── no_fr_corrected_patch_normal_pair_nobg/   (to be created)
+│
+├── models/
+│   ├── backbone_models/                              (/home/comp/f2256768/models on cluster)
+│   └── huggingface_cache/                            (/home/comp/f2256768/.cache/huggingface on cluster)
+│
+├── runtime/
+│   ├── local_machine/
+│   │   ├── external_disk_root/                       (/Volumes/未命名)
+│   │   ├── project_root/                             (/Users/wuyuchen/Desktop/FYP_final)
+│   │   └── backup_root/                              (/Users/wuyuchen/Desktop/FYP_final_backup)
+│   │
+│   └── cluster/
+│       ├── code_root/                                (/home/comp/f2256768/FYP_final)
+│       ├── cls_cache_root/                           (/home/comp/f2256768/cdf_cache/cache_clip for CDF)
+│       ├── patch_cache_root/                         (/tmp/f2256768/cdf_cache/cache_clip_patch for CDF)
+│       ├── compact_cache_root/                       (/tmp/f2256768/fyp_final_compact_cdf for CDF)
+│       └── conda_env/                                (/home/comp/f2256768/.conda/envs/fyp)
+│
+└── notes/
+    ├── path_manifest/                                (should record which logical paths are local, external-disk, or cluster-backed)
+    └── experiment_lineage/                           (should record which checkpoint/cache combination produced each report figure/table)
+
+
+Practical cleanup recommendation:
+
+1. Keep the logical structure above stable.
+2. Prefer symlinks or a small path-manifest over physically moving large caches unless necessary.
+3. First normalize only the assets still needed for the final report:
+   - DF40 train / test_ff / test_ood
+   - CDF real
+   - Celeb-real / YouTube-real
+   - tiktok / animations / kobe_test
+   - official checkpoints
+   - corrected no-FR head
+4. Explicitly separate:
+   - official mainline assets
+   - ablation-only assets
+   - historical / wrong / superseded artifacts

@@ -48,10 +48,14 @@ slurm-*.err
 # Local runtime data
 cache
 models
-outputs/**
 demo/outputs/**
 data/frames/**
 data/manifests/**
+
+# Local writing / drafting workspace
+docs/
+notes/
+chapters/
 
 # Raw local datasets
 data/raw/**

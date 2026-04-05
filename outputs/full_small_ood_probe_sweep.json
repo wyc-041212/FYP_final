@@ -1,0 +1,1308 @@
+{
+  "upstream_checkpoint": "/Users/wuyuchen/Desktop/FYP_final/checkpoints/upstream/checkpoint_best_hybrid_manifold.pt",
+  "patch_branch": "/Users/wuyuchen/Desktop/FYP_final/checkpoints/downstream/patch_branch.joblib",
+  "pair_branch": "/Users/wuyuchen/Desktop/FYP_final/checkpoints/downstream/pair_branch_full_no_bg_keep_hair.joblib",
+  "route_meta_head": "/Users/wuyuchen/Desktop/FYP_final/checkpoints/heads/route_meta_head_full_patch_normal_pair_nobg.joblib",
+  "device": "cpu",
+  "route_batch_size": 2048,
+  "thresholds": [
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9
+  ],
+  "probe_bundle_sources": {
+    "animations_root": "/Users/wuyuchen/Desktop/FYP_final_backup/outputs/demos/animations_20260324_1955/sampled",
+    "animations_repaired_root": "/Users/wuyuchen/Desktop/FYP_final_backup/outputs/reports/domain_shift_audit_20260324/animation_patch_reextract",
+    "kobe_root": "/Users/wuyuchen/Desktop/kobe_test/kobe_prediction_samples/kobe_sample",
+    "tiktok_root": "/Users/wuyuchen/Desktop/FYP_final_backup/outputs/probes/tiktok_topk_no_fr_20260329/sampled_bundle"
+  },
+  "probes": {
+    "animations": {
+      "probe_name": "animations",
+      "num_samples": 9,
+      "num_images": 264,
+      "mean_fake_prob": 0.08580714464187622,
+      "min_fake_prob": 4.029593103638263e-09,
+      "max_fake_prob": 0.999965250492096,
+      "mean_sample_fake_prob": 0.09649590402841568,
+      "samples": [
+        {
+          "sample_name": "example--d0",
+          "num_images": 32,
+          "mean_fake_prob": 0.024895528331398964,
+          "min_fake_prob": 1.376093496219255e-05,
+          "max_fake_prob": 0.29201966524124146,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.0625
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.0
+            }
+          ]
+        },
+        {
+          "sample_name": "example--d13",
+          "num_images": 32,
+          "mean_fake_prob": 0.29825061559677124,
+          "min_fake_prob": 8.986386092146859e-05,
+          "max_fake_prob": 0.9989093542098999,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.5
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.375
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.3125
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.28125
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.28125
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.25
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.25
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.25
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.21875
+            }
+          ]
+        },
+        {
+          "sample_name": "example--d18",
+          "num_images": 32,
+          "mean_fake_prob": 0.10785829275846481,
+          "min_fake_prob": 2.8336033210507594e-05,
+          "max_fake_prob": 0.9265394806861877,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.21875
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.15625
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.125
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.09375
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.09375
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.0625
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.0625
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.0625
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.03125
+            }
+          ]
+        },
+        {
+          "sample_name": "example--d19",
+          "num_images": 32,
+          "mean_fake_prob": 0.18355728685855865,
+          "min_fake_prob": 6.697285425616428e-05,
+          "max_fake_prob": 0.9814642071723938,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.3125
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.21875
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.21875
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.1875
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.15625
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.125
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.09375
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.09375
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.09375
+            }
+          ]
+        },
+        {
+          "sample_name": "example--d3",
+          "num_images": 31,
+          "mean_fake_prob": 0.002686478663235903,
+          "min_fake_prob": 1.1538739272509702e-05,
+          "max_fake_prob": 0.019018132239580154,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.0
+            }
+          ]
+        },
+        {
+          "sample_name": "s0--28__podium_speech_happy",
+          "num_images": 9,
+          "mean_fake_prob": 0.2232629507780075,
+          "min_fake_prob": 0.0009082620963454247,
+          "max_fake_prob": 0.999965250492096,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.2222222222222222
+            }
+          ]
+        },
+        {
+          "sample_name": "s42--d0",
+          "num_images": 32,
+          "mean_fake_prob": 3.3921611475307145e-07,
+          "min_fake_prob": 2.489756312229474e-08,
+          "max_fake_prob": 3.553184569682344e-06,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.0
+            }
+          ]
+        },
+        {
+          "sample_name": "s42--d3",
+          "num_images": 32,
+          "mean_fake_prob": 0.027861399576067924,
+          "min_fake_prob": 4.029593103638263e-09,
+          "max_fake_prob": 0.890941321849823,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.0
+            }
+          ]
+        },
+        {
+          "sample_name": "s42--d9",
+          "num_images": 32,
+          "mean_fake_prob": 9.028088243212551e-05,
+          "min_fake_prob": 4.6993169355857844e-09,
+          "max_fake_prob": 0.0008759608026593924,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.0
+            }
+          ]
+        }
+      ],
+      "videos": [
+        {
+          "sample_name": "example--d0",
+          "video_name": "DEMO/ADHOC/frames/example--d0",
+          "num_images": 32,
+          "mean_fake_prob": 0.024895528331398964,
+          "min_fake_prob": 1.376093496219255e-05,
+          "max_fake_prob": 0.29201966524124146,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.0625
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.0
+            }
+          ]
+        },
+        {
+          "sample_name": "example--d13",
+          "video_name": "DEMO/ADHOC/frames/example--d13",
+          "num_images": 32,
+          "mean_fake_prob": 0.29825061559677124,
+          "min_fake_prob": 8.986386092146859e-05,
+          "max_fake_prob": 0.9989093542098999,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.5
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.375
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.3125
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.28125
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.28125
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.25
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.25
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.25
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.21875
+            }
+          ]
+        },
+        {
+          "sample_name": "example--d18",
+          "video_name": "DEMO/ADHOC/frames/example--d18",
+          "num_images": 32,
+          "mean_fake_prob": 0.10785829275846481,
+          "min_fake_prob": 2.8336033210507594e-05,
+          "max_fake_prob": 0.9265394806861877,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.21875
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.15625
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.125
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.09375
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.09375
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.0625
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.0625
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.0625
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.03125
+            }
+          ]
+        },
+        {
+          "sample_name": "example--d19",
+          "video_name": "DEMO/ADHOC/frames/example--d19",
+          "num_images": 32,
+          "mean_fake_prob": 0.18355728685855865,
+          "min_fake_prob": 6.697285425616428e-05,
+          "max_fake_prob": 0.9814642071723938,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.3125
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.21875
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.21875
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.1875
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.15625
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.125
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.09375
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.09375
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.09375
+            }
+          ]
+        },
+        {
+          "sample_name": "example--d3",
+          "video_name": "DEMO/ADHOC/frames/example--d3",
+          "num_images": 31,
+          "mean_fake_prob": 0.002686478663235903,
+          "min_fake_prob": 1.1538739272509702e-05,
+          "max_fake_prob": 0.019018132239580154,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.0
+            }
+          ]
+        },
+        {
+          "sample_name": "s0--28__podium_speech_happy",
+          "video_name": "DEMO/ADHOC/frames/s0--28__podium_speech_happy",
+          "num_images": 9,
+          "mean_fake_prob": 0.2232629507780075,
+          "min_fake_prob": 0.0009082620963454247,
+          "max_fake_prob": 0.999965250492096,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.2222222222222222
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.2222222222222222
+            }
+          ]
+        },
+        {
+          "sample_name": "s42--d0",
+          "video_name": "DEMO/ADHOC/frames/s42--d0",
+          "num_images": 32,
+          "mean_fake_prob": 3.3921611475307145e-07,
+          "min_fake_prob": 2.489756312229474e-08,
+          "max_fake_prob": 3.553184569682344e-06,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.0
+            }
+          ]
+        },
+        {
+          "sample_name": "s42--d3",
+          "video_name": "DEMO/ADHOC/frames/s42--d3",
+          "num_images": 32,
+          "mean_fake_prob": 0.027861399576067924,
+          "min_fake_prob": 4.029593103638263e-09,
+          "max_fake_prob": 0.890941321849823,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.03125
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.0
+            }
+          ]
+        },
+        {
+          "sample_name": "s42--d9",
+          "video_name": "DEMO/ADHOC/frames/s42--d9",
+          "num_images": 32,
+          "mean_fake_prob": 9.028088243212551e-05,
+          "min_fake_prob": 4.6993169355857844e-09,
+          "max_fake_prob": 0.0008759608026593924,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.0
+            }
+          ]
+        }
+      ],
+      "threshold_rows": [
+        {
+          "threshold": 0.1,
+          "pooled_fake_positive_rate": 0.14393939393939395,
+          "mean_sample_fake_positive_rate": 0.1496913582086563,
+          "min_sample_fake_positive_rate": 0.0,
+          "max_sample_fake_positive_rate": 0.5
+        },
+        {
+          "threshold": 0.2,
+          "pooled_fake_positive_rate": 0.10606060606060606,
+          "mean_sample_fake_positive_rate": 0.11496913433074951,
+          "min_sample_fake_positive_rate": 0.0,
+          "max_sample_fake_positive_rate": 0.375
+        },
+        {
+          "threshold": 0.3,
+          "pooled_fake_positive_rate": 0.09090909090909091,
+          "mean_sample_fake_positive_rate": 0.10108024626970291,
+          "min_sample_fake_positive_rate": 0.0,
+          "max_sample_fake_positive_rate": 0.3125
+        },
+        {
+          "threshold": 0.4,
+          "pooled_fake_positive_rate": 0.07954545454545454,
+          "mean_sample_fake_positive_rate": 0.09066358208656311,
+          "min_sample_fake_positive_rate": 0.0,
+          "max_sample_fake_positive_rate": 0.28125
+        },
+        {
+          "threshold": 0.5,
+          "pooled_fake_positive_rate": 0.07575757575757576,
+          "mean_sample_fake_positive_rate": 0.08719135820865631,
+          "min_sample_fake_positive_rate": 0.0,
+          "max_sample_fake_positive_rate": 0.28125
+        },
+        {
+          "threshold": 0.6,
+          "pooled_fake_positive_rate": 0.06439393939393939,
+          "mean_sample_fake_positive_rate": 0.07677468657493591,
+          "min_sample_fake_positive_rate": 0.0,
+          "max_sample_fake_positive_rate": 0.25
+        },
+        {
+          "threshold": 0.7,
+          "pooled_fake_positive_rate": 0.06060606060606061,
+          "mean_sample_fake_positive_rate": 0.07330247014760971,
+          "min_sample_fake_positive_rate": 0.0,
+          "max_sample_fake_positive_rate": 0.25
+        },
+        {
+          "threshold": 0.8,
+          "pooled_fake_positive_rate": 0.06060606060606061,
+          "mean_sample_fake_positive_rate": 0.07330247014760971,
+          "min_sample_fake_positive_rate": 0.0,
+          "max_sample_fake_positive_rate": 0.25
+        },
+        {
+          "threshold": 0.9,
+          "pooled_fake_positive_rate": 0.04924242424242424,
+          "mean_sample_fake_positive_rate": 0.06288579851388931,
+          "min_sample_fake_positive_rate": 0.0,
+          "max_sample_fake_positive_rate": 0.2222222238779068
+        }
+      ]
+    },
+    "kobe_test": {
+      "probe_name": "kobe_test",
+      "num_samples": 1,
+      "num_images": 24,
+      "mean_fake_prob": 0.09688561409711838,
+      "min_fake_prob": 5.494716788234655e-06,
+      "max_fake_prob": 0.643512487411499,
+      "mean_sample_fake_prob": 0.09688561409711838,
+      "samples": [
+        {
+          "sample_name": "kobe_sample",
+          "num_images": 24,
+          "mean_fake_prob": 0.09688561409711838,
+          "min_fake_prob": 5.494716788234655e-06,
+          "max_fake_prob": 0.643512487411499,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.20833333333333334
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.20833333333333334
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.16666666666666666
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.16666666666666666
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.08333333333333333
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.041666666666666664
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.0
+            }
+          ]
+        }
+      ],
+      "videos": [
+        {
+          "sample_name": "kobe_sample",
+          "video_name": "UNK/kobe/kobe_frames_copy",
+          "num_images": 24,
+          "mean_fake_prob": 0.09688561409711838,
+          "min_fake_prob": 5.494716788234655e-06,
+          "max_fake_prob": 0.643512487411499,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.20833333333333334
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.20833333333333334
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.16666666666666666
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.16666666666666666
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.08333333333333333
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.041666666666666664
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.0
+            }
+          ]
+        }
+      ],
+      "threshold_rows": [
+        {
+          "threshold": 0.1,
+          "pooled_fake_positive_rate": 0.20833333333333334,
+          "mean_sample_fake_positive_rate": 0.2083333283662796,
+          "min_sample_fake_positive_rate": 0.2083333283662796,
+          "max_sample_fake_positive_rate": 0.2083333283662796
+        },
+        {
+          "threshold": 0.2,
+          "pooled_fake_positive_rate": 0.20833333333333334,
+          "mean_sample_fake_positive_rate": 0.2083333283662796,
+          "min_sample_fake_positive_rate": 0.2083333283662796,
+          "max_sample_fake_positive_rate": 0.2083333283662796
+        },
+        {
+          "threshold": 0.3,
+          "pooled_fake_positive_rate": 0.16666666666666666,
+          "mean_sample_fake_positive_rate": 0.1666666716337204,
+          "min_sample_fake_positive_rate": 0.1666666716337204,
+          "max_sample_fake_positive_rate": 0.1666666716337204
+        },
+        {
+          "threshold": 0.4,
+          "pooled_fake_positive_rate": 0.16666666666666666,
+          "mean_sample_fake_positive_rate": 0.1666666716337204,
+          "min_sample_fake_positive_rate": 0.1666666716337204,
+          "max_sample_fake_positive_rate": 0.1666666716337204
+        },
+        {
+          "threshold": 0.5,
+          "pooled_fake_positive_rate": 0.08333333333333333,
+          "mean_sample_fake_positive_rate": 0.0833333358168602,
+          "min_sample_fake_positive_rate": 0.0833333358168602,
+          "max_sample_fake_positive_rate": 0.0833333358168602
+        },
+        {
+          "threshold": 0.6,
+          "pooled_fake_positive_rate": 0.041666666666666664,
+          "mean_sample_fake_positive_rate": 0.0416666679084301,
+          "min_sample_fake_positive_rate": 0.0416666679084301,
+          "max_sample_fake_positive_rate": 0.0416666679084301
+        },
+        {
+          "threshold": 0.7,
+          "pooled_fake_positive_rate": 0.0,
+          "mean_sample_fake_positive_rate": 0.0,
+          "min_sample_fake_positive_rate": 0.0,
+          "max_sample_fake_positive_rate": 0.0
+        },
+        {
+          "threshold": 0.8,
+          "pooled_fake_positive_rate": 0.0,
+          "mean_sample_fake_positive_rate": 0.0,
+          "min_sample_fake_positive_rate": 0.0,
+          "max_sample_fake_positive_rate": 0.0
+        },
+        {
+          "threshold": 0.9,
+          "pooled_fake_positive_rate": 0.0,
+          "mean_sample_fake_positive_rate": 0.0,
+          "min_sample_fake_positive_rate": 0.0,
+          "max_sample_fake_positive_rate": 0.0
+        }
+      ]
+    },
+    "tiktok": {
+      "probe_name": "tiktok",
+      "num_samples": 1,
+      "num_images": 48,
+      "mean_fake_prob": 0.29695531725883484,
+      "min_fake_prob": 7.687066499784123e-06,
+      "max_fake_prob": 0.9997332692146301,
+      "mean_sample_fake_prob": 0.29695531725883484,
+      "samples": [
+        {
+          "sample_name": "sampled_bundle",
+          "num_images": 48,
+          "mean_fake_prob": 0.29695531725883484,
+          "min_fake_prob": 7.687066499784123e-06,
+          "max_fake_prob": 0.9997332692146301,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.4166666666666667
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.3125
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.2916666666666667
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.2916666666666667
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.2916666666666667
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.2916666666666667
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.25
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.25
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.22916666666666666
+            }
+          ]
+        }
+      ],
+      "videos": [
+        {
+          "sample_name": "sampled_bundle",
+          "video_name": "UNK/tiktok/563_1774777509",
+          "num_images": 24,
+          "mean_fake_prob": 0.06946276128292084,
+          "min_fake_prob": 7.687066499784123e-06,
+          "max_fake_prob": 0.6224983334541321,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.25
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.041666666666666664
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.041666666666666664
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.041666666666666664
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.041666666666666664
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.041666666666666664
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.0
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.0
+            }
+          ]
+        },
+        {
+          "sample_name": "sampled_bundle",
+          "video_name": "UNK/tiktok/564_1774777598",
+          "num_images": 24,
+          "mean_fake_prob": 0.5244478583335876,
+          "min_fake_prob": 1.4983694200054742e-05,
+          "max_fake_prob": 0.9997332692146301,
+          "threshold_rows": [
+            {
+              "threshold": 0.1,
+              "fake_positive_rate": 0.5833333333333334
+            },
+            {
+              "threshold": 0.2,
+              "fake_positive_rate": 0.5833333333333334
+            },
+            {
+              "threshold": 0.3,
+              "fake_positive_rate": 0.5416666666666666
+            },
+            {
+              "threshold": 0.4,
+              "fake_positive_rate": 0.5416666666666666
+            },
+            {
+              "threshold": 0.5,
+              "fake_positive_rate": 0.5416666666666666
+            },
+            {
+              "threshold": 0.6,
+              "fake_positive_rate": 0.5416666666666666
+            },
+            {
+              "threshold": 0.7,
+              "fake_positive_rate": 0.5
+            },
+            {
+              "threshold": 0.8,
+              "fake_positive_rate": 0.5
+            },
+            {
+              "threshold": 0.9,
+              "fake_positive_rate": 0.4583333333333333
+            }
+          ]
+        }
+      ],
+      "threshold_rows": [
+        {
+          "threshold": 0.1,
+          "pooled_fake_positive_rate": 0.4166666666666667,
+          "mean_sample_fake_positive_rate": 0.4166666567325592,
+          "min_sample_fake_positive_rate": 0.4166666567325592,
+          "max_sample_fake_positive_rate": 0.4166666567325592
+        },
+        {
+          "threshold": 0.2,
+          "pooled_fake_positive_rate": 0.3125,
+          "mean_sample_fake_positive_rate": 0.3125,
+          "min_sample_fake_positive_rate": 0.3125,
+          "max_sample_fake_positive_rate": 0.3125
+        },
+        {
+          "threshold": 0.3,
+          "pooled_fake_positive_rate": 0.2916666666666667,
+          "mean_sample_fake_positive_rate": 0.2916666567325592,
+          "min_sample_fake_positive_rate": 0.2916666567325592,
+          "max_sample_fake_positive_rate": 0.2916666567325592
+        },
+        {
+          "threshold": 0.4,
+          "pooled_fake_positive_rate": 0.2916666666666667,
+          "mean_sample_fake_positive_rate": 0.2916666567325592,
+          "min_sample_fake_positive_rate": 0.2916666567325592,
+          "max_sample_fake_positive_rate": 0.2916666567325592
+        },
+        {
+          "threshold": 0.5,
+          "pooled_fake_positive_rate": 0.2916666666666667,
+          "mean_sample_fake_positive_rate": 0.2916666567325592,
+          "min_sample_fake_positive_rate": 0.2916666567325592,
+          "max_sample_fake_positive_rate": 0.2916666567325592
+        },
+        {
+          "threshold": 0.6,
+          "pooled_fake_positive_rate": 0.2916666666666667,
+          "mean_sample_fake_positive_rate": 0.2916666567325592,
+          "min_sample_fake_positive_rate": 0.2916666567325592,
+          "max_sample_fake_positive_rate": 0.2916666567325592
+        },
+        {
+          "threshold": 0.7,
+          "pooled_fake_positive_rate": 0.25,
+          "mean_sample_fake_positive_rate": 0.25,
+          "min_sample_fake_positive_rate": 0.25,
+          "max_sample_fake_positive_rate": 0.25
+        },
+        {
+          "threshold": 0.8,
+          "pooled_fake_positive_rate": 0.25,
+          "mean_sample_fake_positive_rate": 0.25,
+          "min_sample_fake_positive_rate": 0.25,
+          "max_sample_fake_positive_rate": 0.25
+        },
+        {
+          "threshold": 0.9,
+          "pooled_fake_positive_rate": 0.22916666666666666,
+          "mean_sample_fake_positive_rate": 0.2291666716337204,
+          "min_sample_fake_positive_rate": 0.2291666716337204,
+          "max_sample_fake_positive_rate": 0.2291666716337204
+        }
+      ]
+    }
+  }
+}

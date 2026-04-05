@@ -1013,8 +1013,28 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-route-meta-head", type=Path)
     parser.add_argument("--output-head-meta", type=Path)
     parser.add_argument("--output-json", type=Path, default=ROOT / "outputs" / "route_meta_pipeline.json")
+    parser.add_argument(
+        "--load-patch-branch",
+        type=Path,
+        default=None,
+        help="Reuse an existing serialized patch branch bundle instead of retraining it.",
+    )
+    parser.add_argument(
+        "--load-pair-branch",
+        type=Path,
+        default=None,
+        help="Reuse an existing serialized pair branch bundle instead of retraining it.",
+    )
+    parser.add_argument(
+        "--variant-name",
+        type=str,
+        default=None,
+        help="Optional explicit variant name to store in head metadata.",
+    )
     args = parser.parse_args()
     configure_group_scheme(args.no_fr)
+    if args.load_pair_branch is not None and args.load_patch_branch is None:
+        raise ValueError("Loading a pair branch without a patch branch is not supported.")
     if args.patch_train_groups is None:
         args.patch_train_groups = list(FAKE_GROUPS)
     if args.output_patch_branch is None:
@@ -1297,22 +1317,77 @@ def main() -> None:
     train_route_prob_mat = route_prob_from_map(train_route_map, train_img_ids)
 
     real_ref = load_real_reference_cache(args.real_reference_cache)
-    pair_train_methods = preload_pair_training_methods(args, real_ref)
-    pair_mean_dirs, pair_classifiers, pair_region_idx, pair_region_names_by_group = train_pair_branch(
-        args,
-        pair_train_methods,
-        real_ref,
-        real_pool_means,
-    )
+    reuse_patch_mode = args.load_patch_branch is not None
+    reuse_pair_mode = args.load_pair_branch is not None
+    patch_bundle_source = None
+    pair_bundle_source = None
 
-    train_pair_scores = pair_score_matrix(
-        train_region_vecs,
-        real_pool_means,
-        pair_mean_dirs,
-        pair_classifiers,
-        pair_region_idx,
-        pair_region_names_by_group,
-    )
+    if reuse_patch_mode:
+        patch_bundle_source = args.load_patch_branch
+        patch_bundle = joblib.load(args.load_patch_branch)
+        patch_scaler = patch_bundle["patch_scaler"]
+        patch_clf = patch_bundle["patch_clf"]
+        patch_group_classifiers = patch_bundle["patch_group_classifiers"]
+        patch_train_prob = predict_patch_scores(patch_scaler, patch_clf, train_x)
+        patch_train_scores = predict_group_binary_experts(patch_group_classifiers, train_x)
+    else:
+        patch_bundle = {
+            "patch_scaler": patch_scaler,
+            "patch_clf": patch_clf,
+            "patch_group_classifiers": patch_group_classifiers,
+        }
+
+    if reuse_pair_mode:
+        pair_bundle_source = args.load_pair_branch
+        pair_bundle = joblib.load(args.load_pair_branch)
+        pair_mean_dirs = pair_bundle["pair_mean_dirs"]
+        pair_classifiers = pair_bundle["pair_classifiers"]
+        pair_region_idx = pair_bundle["pair_region_idx"]
+        pair_region_names_by_group = {
+            str(group): [str(name) for name in names]
+            for group, names in pair_bundle["pair_region_names_by_group"].items()
+        }
+        loaded_real_pool_means = np.asarray(pair_bundle["real_pool_means"], dtype=np.float32)
+        if loaded_real_pool_means.shape != real_pool_means.shape or not np.allclose(loaded_real_pool_means, real_pool_means):
+            raise ValueError(
+                "Loaded pair bundle real_pool_means do not match the current train-real reference cache. "
+                "Use a pair bundle produced from the same real reference setup."
+            )
+    else:
+        pair_train_methods = preload_pair_training_methods(args, real_ref)
+        pair_mean_dirs, pair_classifiers, pair_region_idx, pair_region_names_by_group = train_pair_branch(
+            args,
+            pair_train_methods,
+            real_ref,
+            real_pool_means,
+        )
+
+        train_pair_scores = pair_score_matrix(
+            train_region_vecs,
+            real_pool_means,
+            pair_mean_dirs,
+            pair_classifiers,
+            pair_region_idx,
+            pair_region_names_by_group,
+        )
+        pair_bundle = {
+            "pair_mean_dirs": pair_mean_dirs,
+            "pair_classifiers": pair_classifiers,
+            "pair_region_idx": pair_region_idx,
+            "pair_region_names_by_group": pair_region_names_by_group,
+            "real_pool_means": real_pool_means,
+            "region_names": np.asarray(real_ref["region_names"], dtype=object),
+        }
+
+    if reuse_pair_mode:
+        train_pair_scores = pair_score_matrix(
+            train_region_vecs,
+            real_pool_means,
+            pair_mean_dirs,
+            pair_classifiers,
+            pair_region_idx,
+            pair_region_names_by_group,
+        )
 
     train_meta_x = build_meta_features(
         train_route_prob_mat,
@@ -1406,6 +1481,9 @@ def main() -> None:
             "max_train_fake_per_method": args.max_train_fake_per_method,
             "route_batch_size": args.route_batch_size,
             "val_ratio": args.val_ratio,
+            "load_patch_branch": (str(args.load_patch_branch) if args.load_patch_branch is not None else None),
+            "load_pair_branch": (str(args.load_pair_branch) if args.load_pair_branch is not None else None),
+            "variant_name": args.variant_name,
         },
         "pair_region_names_by_group": pair_region_names_by_group,
         "route_meta_fusion_search": route_meta_search,
@@ -1427,19 +1505,6 @@ def main() -> None:
     }
     for key, value in extra_summaries.items():
         output[key] = {"route_meta_fusion": value}
-    patch_bundle = {
-        "patch_scaler": patch_scaler,
-        "patch_clf": patch_clf,
-        "patch_group_classifiers": patch_group_classifiers,
-    }
-    pair_bundle = {
-        "pair_mean_dirs": pair_mean_dirs,
-        "pair_classifiers": pair_classifiers,
-        "pair_region_idx": pair_region_idx,
-        "pair_region_names_by_group": pair_region_names_by_group,
-        "real_pool_means": real_pool_means,
-        "region_names": np.asarray(real_ref["region_names"], dtype=object),
-    }
     head_bundle = {
         "route_meta_experts": route_meta_experts,
         "route_meta_threshold": float(threshold_choice["threshold"]),
@@ -1449,7 +1514,7 @@ def main() -> None:
     }
     head_meta = {
         "date": str(date.today()),
-        "variant": "no_fr" if args.no_fr else "full",
+        "variant": args.variant_name or ("no_fr" if args.no_fr else "full"),
         "default_threshold": float(threshold_choice["threshold"]),
         "pair_route_mode": args.pair_route_mode,
         "route_gating_temperature": float(args.route_gating_temperature),
@@ -1457,6 +1522,19 @@ def main() -> None:
         "config": output["config"],
         "source": "src/train/train_downstream_head.py",
     }
+    if reuse_patch_mode or reuse_pair_mode:
+        if reuse_patch_mode and reuse_pair_mode:
+            head_meta["branch_reuse_mode"] = "head_only"
+        elif reuse_patch_mode:
+            head_meta["branch_reuse_mode"] = "reuse_patch_retrain_pair"
+        else:
+            head_meta["branch_reuse_mode"] = "full_train"
+        if reuse_patch_mode:
+            head_meta["patch_branch_source"] = str(args.load_patch_branch)
+        if reuse_pair_mode:
+            head_meta["pair_branch_source"] = str(args.load_pair_branch)
+    else:
+        head_meta["branch_reuse_mode"] = "full_train"
     for path in [
         args.output_patch_branch,
         args.output_pair_branch,
