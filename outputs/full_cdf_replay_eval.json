@@ -1,0 +1,752 @@
+{
+  "mode": "cdf_replay_eval",
+  "config": {
+    "project_root": "/home/comp/f2256768/FYP_final",
+    "upstream_checkpoint": "/home/comp/f2256768/FYP_final/checkpoints/upstream/checkpoint_best_hybrid_manifold.pt",
+    "patch_branch": "/home/comp/f2256768/FYP_final/checkpoints/downstream/patch_branch.joblib",
+    "pair_branch": "/home/comp/f2256768/FYP_final/checkpoints/downstream/pair_branch_full_no_bg_keep_hair.joblib",
+    "route_meta_head": "/home/comp/f2256768/FYP_final/checkpoints/heads/route_meta_head_full_patch_normal_pair_nobg.joblib",
+    "cdf_cls_cache_root": "/home/comp/f2256768/cdf_cache/cache_clip",
+    "cdf_patch_cache_root": "/tmp/f2256768/cdf_cache/cache_clip_patch",
+    "cdf_split_name": "DF40_test_cdf",
+    "cdf_groups": [
+      "EFS",
+      "FR",
+      "FS"
+    ],
+    "compact_cache_dir": "/tmp/f2256768/fyp_final_compact_cdf",
+    "device": "cuda",
+    "route_gating_temperature": 1.0,
+    "route_gating_floor": 0.0
+  },
+  "cdf": {
+    "route_meta_fusion": {
+      "summary": {
+        "num_methods": 31,
+        "num_images": 650612,
+        "threshold": 0.2,
+        "mean_fake_prob": 0.8889603018760681,
+        "min_fake_prob": 1.2894296741450262e-10,
+        "max_fake_prob": 1.0000001192092896,
+        "fake_positive_rate": 0.9164448242577757,
+        "mean_route_fake_prob": 0.9608280062675476,
+        "mean_patch_global_prob": 0.9261959195137024,
+        "mean_patch_dynamic_prob": 0.8620332479476929,
+        "mean_pair_dynamic_prob": 0.7456721663475037,
+        "route_top1_counts": {
+          "EFS": 214987,
+          "FS": 111682,
+          "FR": 296273,
+          "FE": 4646,
+          "REAL": 23024
+        }
+      },
+      "methods": [
+        {
+          "group": "EFS",
+          "method": "DiT",
+          "metrics": {
+            "num_images": 28174,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.7050144076347351,
+            "min_fake_prob": 2.60173216304338e-10,
+            "max_fake_prob": 0.9999997615814209,
+            "fake_positive_rate": 0.7678355931000213,
+            "mean_route_fake_prob": 0.8883052468299866,
+            "mean_patch_global_prob": 0.8564972281455994,
+            "mean_patch_dynamic_prob": 0.6282358765602112,
+            "mean_pair_dynamic_prob": 0.5609050989151001
+          },
+          "route_top1_counts": {
+            "EFS": 9601,
+            "FS": 3873,
+            "FR": 11621,
+            "FE": 48,
+            "REAL": 3031
+          }
+        },
+        {
+          "group": "EFS",
+          "method": "RDDM",
+          "metrics": {
+            "num_images": 14027,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.987912654876709,
+            "min_fake_prob": 0.10926532000303268,
+            "max_fake_prob": 0.9999990463256836,
+            "fake_positive_rate": 0.9995722535110858,
+            "mean_route_fake_prob": 0.9999998807907104,
+            "mean_patch_global_prob": 1.0,
+            "mean_patch_dynamic_prob": 0.9462659955024719,
+            "mean_pair_dynamic_prob": 0.9507665038108826
+          },
+          "route_top1_counts": {
+            "EFS": 14022,
+            "FR": 5
+          }
+        },
+        {
+          "group": "EFS",
+          "method": "SiT",
+          "metrics": {
+            "num_images": 28174,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.723299503326416,
+            "min_fake_prob": 4.4271383781158136e-10,
+            "max_fake_prob": 0.9999998211860657,
+            "fake_positive_rate": 0.7873216440689997,
+            "mean_route_fake_prob": 0.9119504690170288,
+            "mean_patch_global_prob": 0.8661912083625793,
+            "mean_patch_dynamic_prob": 0.643697202205658,
+            "mean_pair_dynamic_prob": 0.5446458458900452
+          },
+          "route_top1_counts": {
+            "EFS": 10686,
+            "FS": 4207,
+            "FR": 10839,
+            "FE": 71,
+            "REAL": 2371
+          }
+        },
+        {
+          "group": "EFS",
+          "method": "StyleGAN2",
+          "metrics": {
+            "num_images": 28174,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9998636245727539,
+            "min_fake_prob": 0.1617114096879959,
+            "max_fake_prob": 1.0,
+            "fake_positive_rate": 0.999964506282388,
+            "mean_route_fake_prob": 1.0,
+            "mean_patch_global_prob": 1.0,
+            "mean_patch_dynamic_prob": 0.9985835552215576,
+            "mean_pair_dynamic_prob": 0.8739303946495056
+          },
+          "route_top1_counts": {
+            "EFS": 25087,
+            "FS": 2,
+            "FE": 3085
+          }
+        },
+        {
+          "group": "EFS",
+          "method": "StyleGAN3",
+          "metrics": {
+            "num_images": 28174,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9943250417709351,
+            "min_fake_prob": 9.301271347794682e-06,
+            "max_fake_prob": 0.9999995827674866,
+            "fake_positive_rate": 0.9981898204017888,
+            "mean_route_fake_prob": 0.9971606135368347,
+            "mean_patch_global_prob": 1.0,
+            "mean_patch_dynamic_prob": 0.9864034056663513,
+            "mean_pair_dynamic_prob": 0.8275980949401855
+          },
+          "route_top1_counts": {
+            "EFS": 27704,
+            "FS": 94,
+            "FR": 141,
+            "FE": 170,
+            "REAL": 65
+          }
+        },
+        {
+          "group": "EFS",
+          "method": "StyleGANXL",
+          "metrics": {
+            "num_images": 17086,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9802440404891968,
+            "min_fake_prob": 1.4705094145028852e-05,
+            "max_fake_prob": 0.9999998807907104,
+            "fake_positive_rate": 0.9937960903663818,
+            "mean_route_fake_prob": 0.9868227243423462,
+            "mean_patch_global_prob": 1.0,
+            "mean_patch_dynamic_prob": 0.9583025574684143,
+            "mean_pair_dynamic_prob": 0.9212115406990051
+          },
+          "route_top1_counts": {
+            "EFS": 13671,
+            "FS": 2129,
+            "FR": 1071,
+            "FE": 32,
+            "REAL": 183
+          }
+        },
+        {
+          "group": "EFS",
+          "method": "VQGAN",
+          "metrics": {
+            "num_images": 28174,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9973610639572144,
+            "min_fake_prob": 2.638911311692027e-10,
+            "max_fake_prob": 0.9999997615814209,
+            "fake_positive_rate": 0.9990061759068645,
+            "mean_route_fake_prob": 0.9997223615646362,
+            "mean_patch_global_prob": 0.999858021736145,
+            "mean_patch_dynamic_prob": 0.993419885635376,
+            "mean_pair_dynamic_prob": 0.9558693170547485
+          },
+          "route_top1_counts": {
+            "EFS": 28017,
+            "FS": 60,
+            "FR": 50,
+            "FE": 41,
+            "REAL": 6
+          }
+        },
+        {
+          "group": "EFS",
+          "method": "ddim",
+          "metrics": {
+            "num_images": 28174,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9766612648963928,
+            "min_fake_prob": 1.146292333942256e-06,
+            "max_fake_prob": 1.0,
+            "fake_positive_rate": 0.987719173706254,
+            "mean_route_fake_prob": 0.9868965744972229,
+            "mean_patch_global_prob": 0.9330453872680664,
+            "mean_patch_dynamic_prob": 0.9646719694137573,
+            "mean_pair_dynamic_prob": 0.7230793833732605
+          },
+          "route_top1_counts": {
+            "EFS": 27245,
+            "FS": 69,
+            "FR": 8,
+            "FE": 573,
+            "REAL": 279
+          }
+        },
+        {
+          "group": "EFS",
+          "method": "pixart",
+          "metrics": {
+            "num_images": 28174,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9930321574211121,
+            "min_fake_prob": 6.668258720310405e-05,
+            "max_fake_prob": 0.9999996423721313,
+            "fake_positive_rate": 0.9966280968268616,
+            "mean_route_fake_prob": 0.9976383447647095,
+            "mean_patch_global_prob": 0.9981898069381714,
+            "mean_patch_dynamic_prob": 0.9845139384269714,
+            "mean_pair_dynamic_prob": 0.8484913110733032
+          },
+          "route_top1_counts": {
+            "EFS": 27775,
+            "FS": 314,
+            "FR": 24,
+            "FE": 17,
+            "REAL": 44
+          }
+        },
+        {
+          "group": "EFS",
+          "method": "sd2.1",
+          "metrics": {
+            "num_images": 28162,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.985365092754364,
+            "min_fake_prob": 1.831669214880094e-05,
+            "max_fake_prob": 0.9999996423721313,
+            "fake_positive_rate": 0.99282721397628,
+            "mean_route_fake_prob": 0.9977723956108093,
+            "mean_patch_global_prob": 0.9951204061508179,
+            "mean_patch_dynamic_prob": 0.9681380391120911,
+            "mean_pair_dynamic_prob": 0.857647180557251
+          },
+          "route_top1_counts": {
+            "EFS": 27792,
+            "FS": 153,
+            "FR": 88,
+            "FE": 87,
+            "REAL": 42
+          }
+        },
+        {
+          "group": "FR",
+          "method": "MRAA",
+          "metrics": {
+            "num_images": 20273,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.8862505555152893,
+            "min_fake_prob": 8.203831503017511e-10,
+            "max_fake_prob": 0.9999997019767761,
+            "fake_positive_rate": 0.9208799881615942,
+            "mean_route_fake_prob": 0.9446097612380981,
+            "mean_patch_global_prob": 0.9631152153015137,
+            "mean_patch_dynamic_prob": 0.8592270016670227,
+            "mean_pair_dynamic_prob": 0.7650790214538574
+          },
+          "route_top1_counts": {
+            "EFS": 130,
+            "FS": 980,
+            "FR": 18236,
+            "REAL": 927
+          }
+        },
+        {
+          "group": "FR",
+          "method": "danet",
+          "metrics": {
+            "num_images": 19284,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9658493995666504,
+            "min_fake_prob": 1.660654191937283e-07,
+            "max_fake_prob": 0.9999991655349731,
+            "fake_positive_rate": 0.9725160755030077,
+            "mean_route_fake_prob": 0.9925283193588257,
+            "mean_patch_global_prob": 0.93995201587677,
+            "mean_patch_dynamic_prob": 0.9564821124076843,
+            "mean_pair_dynamic_prob": 0.7718930244445801
+          },
+          "route_top1_counts": {
+            "EFS": 24,
+            "FS": 39,
+            "FR": 19138,
+            "FE": 3,
+            "REAL": 80
+          }
+        },
+        {
+          "group": "FR",
+          "method": "facevid2vid",
+          "metrics": {
+            "num_images": 19890,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9891490936279297,
+            "min_fake_prob": 5.708985554520041e-05,
+            "max_fake_prob": 0.9999985694885254,
+            "fake_positive_rate": 0.9923579688285571,
+            "mean_route_fake_prob": 0.9967244863510132,
+            "mean_patch_global_prob": 0.9842187762260437,
+            "mean_patch_dynamic_prob": 0.9859436750411987,
+            "mean_pair_dynamic_prob": 0.86456298828125
+          },
+          "route_top1_counts": {
+            "EFS": 1,
+            "FS": 24,
+            "FR": 19830,
+            "REAL": 35
+          }
+        },
+        {
+          "group": "FR",
+          "method": "fomm",
+          "metrics": {
+            "num_images": 20278,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9711867570877075,
+            "min_fake_prob": 5.63100321926413e-09,
+            "max_fake_prob": 0.9999992847442627,
+            "fake_positive_rate": 0.9800769306637735,
+            "mean_route_fake_prob": 0.9875128269195557,
+            "mean_patch_global_prob": 0.9837150573730469,
+            "mean_patch_dynamic_prob": 0.9616363048553467,
+            "mean_pair_dynamic_prob": 0.8679967522621155
+          },
+          "route_top1_counts": {
+            "EFS": 31,
+            "FS": 195,
+            "FR": 19854,
+            "FE": 1,
+            "REAL": 197
+          }
+        },
+        {
+          "group": "FR",
+          "method": "hyperreenact",
+          "metrics": {
+            "num_images": 20503,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9953521490097046,
+            "min_fake_prob": 0.003551687579602003,
+            "max_fake_prob": 0.9999996423721313,
+            "fake_positive_rate": 0.9986831195434814,
+            "mean_route_fake_prob": 0.9957927465438843,
+            "mean_patch_global_prob": 1.0,
+            "mean_patch_dynamic_prob": 0.9927439093589783,
+            "mean_pair_dynamic_prob": 0.8800337314605713
+          },
+          "route_top1_counts": {
+            "EFS": 36,
+            "FS": 149,
+            "FR": 20262,
+            "FE": 2,
+            "REAL": 54
+          }
+        },
+        {
+          "group": "FR",
+          "method": "lia",
+          "metrics": {
+            "num_images": 19806,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.7148655652999878,
+            "min_fake_prob": 1.2894296741450262e-10,
+            "max_fake_prob": 0.9999995231628418,
+            "fake_positive_rate": 0.7656265778047057,
+            "mean_route_fake_prob": 0.9015325903892517,
+            "mean_patch_global_prob": 0.8286799788475037,
+            "mean_patch_dynamic_prob": 0.6651649475097656,
+            "mean_pair_dynamic_prob": 0.5746621489524841
+          },
+          "route_top1_counts": {
+            "EFS": 331,
+            "FS": 2333,
+            "FR": 15255,
+            "FE": 33,
+            "REAL": 1854
+          }
+        },
+        {
+          "group": "FR",
+          "method": "mcnet",
+          "metrics": {
+            "num_images": 19201,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9693719148635864,
+            "min_fake_prob": 1.796986452973215e-07,
+            "max_fake_prob": 0.9999992251396179,
+            "fake_positive_rate": 0.975053382636321,
+            "mean_route_fake_prob": 0.9930593371391296,
+            "mean_patch_global_prob": 0.9404427409172058,
+            "mean_patch_dynamic_prob": 0.9619593620300293,
+            "mean_pair_dynamic_prob": 0.7777923345565796
+          },
+          "route_top1_counts": {
+            "EFS": 13,
+            "FS": 37,
+            "FR": 19055,
+            "FE": 9,
+            "REAL": 87
+          }
+        },
+        {
+          "group": "FR",
+          "method": "one_shot_free",
+          "metrics": {
+            "num_images": 20625,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9655613899230957,
+            "min_fake_prob": 1.762662549253946e-07,
+            "max_fake_prob": 0.9999996423721313,
+            "fake_positive_rate": 0.9762424242424242,
+            "mean_route_fake_prob": 0.9841622114181519,
+            "mean_patch_global_prob": 0.9708268642425537,
+            "mean_patch_dynamic_prob": 0.9508478045463562,
+            "mean_pair_dynamic_prob": 0.8667956590652466
+          },
+          "route_top1_counts": {
+            "EFS": 190,
+            "FS": 369,
+            "FR": 19790,
+            "FE": 7,
+            "REAL": 269
+          }
+        },
+        {
+          "group": "FR",
+          "method": "pirender",
+          "metrics": {
+            "num_images": 20185,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9543901681900024,
+            "min_fake_prob": 3.732763431685271e-09,
+            "max_fake_prob": 0.9999993443489075,
+            "fake_positive_rate": 0.9695813723061679,
+            "mean_route_fake_prob": 0.9773462414741516,
+            "mean_patch_global_prob": 0.9778503775596619,
+            "mean_patch_dynamic_prob": 0.9394733309745789,
+            "mean_pair_dynamic_prob": 0.8310526013374329
+          },
+          "route_top1_counts": {
+            "EFS": 105,
+            "FS": 368,
+            "FR": 19350,
+            "FE": 13,
+            "REAL": 349
+          }
+        },
+        {
+          "group": "FR",
+          "method": "sadtalker",
+          "metrics": {
+            "num_images": 20986,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.6529416441917419,
+            "min_fake_prob": 4.052522761810451e-10,
+            "max_fake_prob": 0.9999980926513672,
+            "fake_positive_rate": 0.7168112074716477,
+            "mean_route_fake_prob": 0.8431990146636963,
+            "mean_patch_global_prob": 0.6545431017875671,
+            "mean_patch_dynamic_prob": 0.6052242517471313,
+            "mean_pair_dynamic_prob": 0.4671863615512848
+          },
+          "route_top1_counts": {
+            "EFS": 35,
+            "FS": 2038,
+            "FR": 15869,
+            "REAL": 3044
+          }
+        },
+        {
+          "group": "FR",
+          "method": "tpsm",
+          "metrics": {
+            "num_images": 20587,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9074392914772034,
+            "min_fake_prob": 3.025714079285535e-08,
+            "max_fake_prob": 0.9999973177909851,
+            "fake_positive_rate": 0.9189294214795745,
+            "mean_route_fake_prob": 0.9858382344245911,
+            "mean_patch_global_prob": 0.8322964906692505,
+            "mean_patch_dynamic_prob": 0.8913383483886719,
+            "mean_pair_dynamic_prob": 0.6522663831710815
+          },
+          "route_top1_counts": {
+            "EFS": 16,
+            "FS": 132,
+            "FR": 20230,
+            "REAL": 209
+          }
+        },
+        {
+          "group": "FR",
+          "method": "wav2lip",
+          "metrics": {
+            "num_images": 9075,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.5319331288337708,
+            "min_fake_prob": 6.766152527148961e-09,
+            "max_fake_prob": 0.9999994039535522,
+            "fake_positive_rate": 0.6073829201101928,
+            "mean_route_fake_prob": 0.7711295485496521,
+            "mean_patch_global_prob": 0.486281156539917,
+            "mean_patch_dynamic_prob": 0.48523303866386414,
+            "mean_pair_dynamic_prob": 0.3610983192920685
+          },
+          "route_top1_counts": {
+            "EFS": 11,
+            "FS": 2297,
+            "FR": 4736,
+            "FE": 1,
+            "REAL": 2030
+          }
+        },
+        {
+          "group": "FS",
+          "method": "blendface",
+          "metrics": {
+            "num_images": 20323,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.8030203580856323,
+            "min_fake_prob": 1.462666858742523e-07,
+            "max_fake_prob": 0.9999998807907104,
+            "fake_positive_rate": 0.8622742705309255,
+            "mean_route_fake_prob": 0.9304636120796204,
+            "mean_patch_global_prob": 0.8954423069953918,
+            "mean_patch_dynamic_prob": 0.7631787657737732,
+            "mean_pair_dynamic_prob": 0.6204904317855835
+          },
+          "route_top1_counts": {
+            "EFS": 75,
+            "FS": 9945,
+            "FR": 9059,
+            "FE": 3,
+            "REAL": 1241
+          }
+        },
+        {
+          "group": "FS",
+          "method": "e4s",
+          "metrics": {
+            "num_images": 9198,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9871200323104858,
+            "min_fake_prob": 2.4917697373894043e-05,
+            "max_fake_prob": 1.0000001192092896,
+            "fake_positive_rate": 0.9905414220482713,
+            "mean_route_fake_prob": 0.9972899556159973,
+            "mean_patch_global_prob": 0.9994564056396484,
+            "mean_patch_dynamic_prob": 0.9789949655532837,
+            "mean_pair_dynamic_prob": 0.8731462955474854
+          },
+          "route_top1_counts": {
+            "EFS": 182,
+            "FS": 8049,
+            "FR": 696,
+            "FE": 249,
+            "REAL": 22
+          }
+        },
+        {
+          "group": "FS",
+          "method": "facedancer",
+          "metrics": {
+            "num_images": 20252,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.891440212726593,
+            "min_fake_prob": 1.3239287000033073e-08,
+            "max_fake_prob": 1.0,
+            "fake_positive_rate": 0.9240075054315623,
+            "mean_route_fake_prob": 0.9789825677871704,
+            "mean_patch_global_prob": 0.961268961429596,
+            "mean_patch_dynamic_prob": 0.8543097376823425,
+            "mean_pair_dynamic_prob": 0.7067372798919678
+          },
+          "route_top1_counts": {
+            "EFS": 459,
+            "FS": 10267,
+            "FR": 9116,
+            "FE": 75,
+            "REAL": 335
+          }
+        },
+        {
+          "group": "FS",
+          "method": "faceswap",
+          "metrics": {
+            "num_images": 20173,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9543764591217041,
+            "min_fake_prob": 9.669491555541754e-05,
+            "max_fake_prob": 1.0,
+            "fake_positive_rate": 0.9748673970158133,
+            "mean_route_fake_prob": 0.9950874447822571,
+            "mean_patch_global_prob": 0.9959515929222107,
+            "mean_patch_dynamic_prob": 0.9285792112350464,
+            "mean_pair_dynamic_prob": 0.9045490622520447
+          },
+          "route_top1_counts": {
+            "EFS": 384,
+            "FS": 17925,
+            "FR": 1776,
+            "FE": 32,
+            "REAL": 56
+          }
+        },
+        {
+          "group": "FS",
+          "method": "fsgan",
+          "metrics": {
+            "num_images": 19601,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.9097280502319336,
+            "min_fake_prob": 5.872527708561393e-07,
+            "max_fake_prob": 1.0,
+            "fake_positive_rate": 0.9362787612876894,
+            "mean_route_fake_prob": 0.979080080986023,
+            "mean_patch_global_prob": 0.9523701667785645,
+            "mean_patch_dynamic_prob": 0.883620023727417,
+            "mean_pair_dynamic_prob": 0.7661734223365784
+          },
+          "route_top1_counts": {
+            "EFS": 374,
+            "FS": 10678,
+            "FR": 8206,
+            "FE": 24,
+            "REAL": 319
+          }
+        },
+        {
+          "group": "FS",
+          "method": "inswap",
+          "metrics": {
+            "num_images": 13433,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.6401123404502869,
+            "min_fake_prob": 1.1806640110023636e-08,
+            "max_fake_prob": 0.9999998807907104,
+            "fake_positive_rate": 0.727015558698727,
+            "mean_route_fake_prob": 0.8647069931030273,
+            "mean_patch_global_prob": 0.796190619468689,
+            "mean_patch_dynamic_prob": 0.5888053178787231,
+            "mean_pair_dynamic_prob": 0.49151939153671265
+          },
+          "route_top1_counts": {
+            "EFS": 194,
+            "FS": 5503,
+            "FR": 6055,
+            "FE": 8,
+            "REAL": 1673
+          }
+        },
+        {
+          "group": "FS",
+          "method": "mobileswap",
+          "metrics": {
+            "num_images": 20243,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.7276037335395813,
+            "min_fake_prob": 1.0899957381127479e-08,
+            "max_fake_prob": 0.9999999403953552,
+            "fake_positive_rate": 0.7954848589635923,
+            "mean_route_fake_prob": 0.9205498099327087,
+            "mean_patch_global_prob": 0.8992257714271545,
+            "mean_patch_dynamic_prob": 0.6840402483940125,
+            "mean_pair_dynamic_prob": 0.6119498610496521
+          },
+          "route_top1_counts": {
+            "EFS": 190,
+            "FS": 7028,
+            "FR": 11526,
+            "FE": 32,
+            "REAL": 1467
+          }
+        },
+        {
+          "group": "FS",
+          "method": "simswap",
+          "metrics": {
+            "num_images": 20322,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.7283604145050049,
+            "min_fake_prob": 6.380998485155942e-08,
+            "max_fake_prob": 1.0,
+            "fake_positive_rate": 0.8032673949414427,
+            "mean_route_fake_prob": 0.9142810702323914,
+            "mean_patch_global_prob": 0.8150139451026917,
+            "mean_patch_dynamic_prob": 0.6785300374031067,
+            "mean_pair_dynamic_prob": 0.5566839575767517
+          },
+          "route_top1_counts": {
+            "EFS": 193,
+            "FS": 11528,
+            "FR": 6996,
+            "FE": 13,
+            "REAL": 1592
+          }
+        },
+        {
+          "group": "FS",
+          "method": "uniface",
+          "metrics": {
+            "num_images": 19881,
+            "threshold": 0.2,
+            "mean_fake_prob": 0.7945731282234192,
+            "min_fake_prob": 4.514254925425121e-08,
+            "max_fake_prob": 1.0,
+            "fake_positive_rate": 0.8545847794376541,
+            "mean_route_fake_prob": 0.9342189431190491,
+            "mean_patch_global_prob": 0.8913594484329224,
+            "mean_patch_dynamic_prob": 0.7472249865531921,
+            "mean_pair_dynamic_prob": 0.6228064894676208
+          },
+          "route_top1_counts": {
+            "EFS": 413,
+            "FS": 10897,
+            "FR": 7391,
+            "FE": 17,
+            "REAL": 1163
+          }
+        }
+      ]
+    }
+  }
+}
