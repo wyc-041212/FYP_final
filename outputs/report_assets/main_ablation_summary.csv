@@ -1,0 +1,9 @@
+setting,model,threshold,test_ff_bacc,ood_bacc,cdf_real_acc
+Full corrected,route_only,0.5500000000000003,0.9555,0.7568,0.2589
+Full corrected,patch_only,0.6400000000000003,0.8232,0.7450,0.5302
+Full corrected,pair_only,0.2,0.9276,0.7874,0.3760
+Full corrected,route_meta_fusion,0.2,0.9507,0.8015,0.5255
+no-FR corrected,route_only,0.6800000000000004,0.9325,0.7549,0.3333
+no-FR corrected,patch_only,0.7700000000000005,0.8208,0.7727,0.7323
+no-FR corrected,pair_only,0.24000000000000005,0.8884,0.7856,0.6093
+no-FR corrected,route_meta_fusion,0.2,0.8973,0.8067,0.7349

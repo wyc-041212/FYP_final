@@ -1,0 +1,62 @@
+{
+  "variant_name": "no_fr_corrected_exfr",
+  "config": {
+    "upstream_checkpoint": "/Users/wuyuchen/Desktop/FYP_final/checkpoints/upstream/checkpoint_no_fr.pt",
+    "patch_branch": "/Users/wuyuchen/Desktop/FYP_final/checkpoints/downstream/patch_branch_no_fr.joblib",
+    "pair_branch": "/Users/wuyuchen/Desktop/FYP_final/checkpoints/downstream/pair_branch_no_fr_no_bg_keep_hair.joblib",
+    "route_meta_head": "/Users/wuyuchen/Desktop/FYP_final/checkpoints/heads/route_meta_head_no_fr_patch_normal_pair_nobg.joblib",
+    "head_meta": "/Users/wuyuchen/Desktop/FYP_final/checkpoints/heads/route_meta_head_no_fr_patch_normal_pair_nobg_meta.json",
+    "exclude_group": [
+      "FR"
+    ],
+    "device": "cpu"
+  },
+  "validation": {
+    "num_fake": 6400,
+    "num_real": 4283,
+    "tpr_at_1pct_fpr": {
+      "threshold": 0.001503672800026834,
+      "fpr": 0.009806210600046696,
+      "tpr": 1.0
+    },
+    "tpr_at_0_1pct_fpr": {
+      "threshold": 0.027881812304258347,
+      "fpr": 0.0009339248190520663,
+      "tpr": 0.99984375
+    }
+  },
+  "test_ff": {
+    "num_fake": 79714,
+    "num_real": 44000,
+    "excluded_groups": [
+      "FR"
+    ],
+    "tpr_at_1pct_fpr": {
+      "threshold": 0.8835754990577698,
+      "fpr": 0.01,
+      "tpr": 0.8892666281957999
+    },
+    "tpr_at_0_1pct_fpr": {
+      "threshold": 0.984736442565918,
+      "fpr": 0.001,
+      "tpr": 0.8009508994655895
+    }
+  },
+  "ood": {
+    "num_fake": 8577,
+    "num_real": 5547,
+    "excluded_groups": [
+      "FR"
+    ],
+    "tpr_at_1pct_fpr": {
+      "threshold": 0.9975059032440186,
+      "fpr": 0.009915269515053182,
+      "tpr": 0.651859624577358
+    },
+    "tpr_at_0_1pct_fpr": {
+      "threshold": 0.9998208284378052,
+      "fpr": 0.0009013881377321074,
+      "tpr": 0.44934126151334963
+    }
+  }
+}

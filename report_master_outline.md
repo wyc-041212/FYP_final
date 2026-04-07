@@ -131,6 +131,11 @@ The structure below is designed to satisfy both a research-paper style narrative
 ### 7.4 Branch-Level Behaviour
 ### 7.5 Final Chosen Variant
 ### 7.6 Result Summary
+Additional refinement note:
+- the current Chapter 7 draft now includes concrete interpretation from the refreshed reruns rather than only placeholder result framing;
+- it explicitly records that no-FR should be interpreted differently depending on whether the removed `FR` group is still included in the `test_ff` average;
+- the refreshed main-result assets now also use a fairer `no-FR` OOD reading that excludes `FR`-type OOD methods when comparing the retained no-FR variant against the full system;
+- it now includes method-level failure interpretation for weak cases such as `MidJourney`, reenactment-style `FR`, and weaker swap methods such as `inswap`, `mobileswap`, and `simswap`.
 
 ## Chapter 8 Ablation Studies and Analysis
 ### 8.1 Fusion Family Evolution
@@ -144,6 +149,11 @@ Additional refinement note:
 ### 8.5 Route-Conditioned Rule / Strategy Search
 ### 8.6 Alternative Heads and Failed Replacements
 ### 8.7 What Was Revalidated Repeatedly
+Additional refinement note:
+- the threshold-calibration section now records the refreshed finding that the full system is more threshold-sensitive than the no-FR redesign;
+- the no-FR ablation section now explicitly reflects the rerun evidence that, once `FR` is removed from the reported `test_ff` average, the remaining closed-set performance is much closer to the full model than the naive aggregate suggests;
+- the exploratory reruns now give concrete negative-result evidence for bridge-gate, correction-aware meta, route-conditioned rule systems, and strategy-learning policies, which can be cited in the final version of Sections 8.5 and 8.6;
+- the fusion-family and pair-region sections now include refreshed rerun interpretation rather than archive-only framing.
 
 ## Chapter 9 Discussion, Contributions and Conclusion
 ### 9.1 Interpretation of Main Findings
@@ -152,6 +162,9 @@ Additional refinement note:
 ### 9.4 Limitations
 ### 9.5 Future Work
 ### 9.6 Final Conclusion
+Additional refinement note:
+- the discussion and limitations sections now explicitly mention method-level failure families and the relevance of temporal modelling for `FR`;
+- the discussion also records the new interpretation that threshold sensitivity itself differentiates the full and no-FR systems.
 
 ## References
 
