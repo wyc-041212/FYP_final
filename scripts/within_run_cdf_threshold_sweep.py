@@ -34,7 +34,7 @@ from train.within_train_downstream_head import (  # noqa: E402
 class MethodProbRow:
     group: str
     method: str
-    fake_prob: np.ndarray
+    prob: np.ndarray
     route_fake: np.ndarray
     patch_prob: np.ndarray
     patch_dynamic: np.ndarray
@@ -65,6 +65,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cdf-groups", nargs="+", required=True)
     parser.add_argument("--compact-cache-dir", type=Path, required=True)
     parser.add_argument("--device", default="cpu")
+    parser.add_argument(
+        "--model-key",
+        choices=["route_only", "patch_only", "pair_only", "route_meta_fusion"],
+        default="route_meta_fusion",
+        help="Which ablation branch to score on the CDF split.",
+    )
     parser.add_argument("--route-batch-size", type=int, default=2048)
     parser.add_argument("--max-cdf-fake-per-method", type=int, default=0)
     parser.add_argument("--seed", type=int, default=42)
@@ -75,6 +81,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-json", type=Path, required=True)
     parser.add_argument("--output-csv", type=Path, required=True)
     return parser.parse_args()
+
+
+def select_prob(feats, route_meta_experts, pair_route_mode: str, model_key: str, route_gating_temperature: float, route_gating_floor: float) -> np.ndarray:
+    if model_key == "route_only":
+        return feats.route_score.astype(np.float32)
+    if model_key == "patch_only":
+        return feats.patch_prob.astype(np.float32)
+    if model_key == "pair_only":
+        return feats.pair_score.astype(np.float32)
+    if model_key == "route_meta_fusion":
+        prob, _ = predict_route_aware_meta_fusion(
+            route_meta_experts,
+            feats.route_prob,
+            feats.meta_x,
+            pair_route_mode,
+            route_gating_temperature=route_gating_temperature,
+            route_gating_floor=route_gating_floor,
+        )
+        return prob.astype(np.float32)
+    raise ValueError(f"Unsupported model_key: {model_key}")
 
 
 def build_real_only_route_map(runtime, cls_cache: EmbeddingCache) -> dict[str, np.ndarray]:
@@ -156,20 +182,20 @@ def method_prob_rows(args: argparse.Namespace, runtime) -> list[MethodProbRow]:
             route_gating_temperature=route_gating_temperature,
             route_gating_floor=route_gating_floor,
         )
-        fake_prob, _ = predict_route_aware_meta_fusion(
+        fake_prob = select_prob(
+            feats,
             head_bundle["route_meta_experts"],
-            feats.route_prob,
-            feats.meta_x,
             runtime.pair_route_mode,
-            route_gating_temperature=route_gating_temperature,
-            route_gating_floor=route_gating_floor,
+            args.model_key,
+            route_gating_temperature,
+            route_gating_floor,
         )
         route_top1 = np.asarray([runtime.hybrid_labels[int(i)] for i in np.argmax(feats.route_prob, axis=1)], dtype=object)
         rows.append(
             MethodProbRow(
                 group=str(cache.group[0]),
                 method=str(cache.method[0]),
-                fake_prob=fake_prob.astype(np.float32),
+                prob=fake_prob.astype(np.float32),
                 route_fake=feats.route_score.astype(np.float32),
                 patch_prob=feats.patch_prob.astype(np.float32),
                 patch_dynamic=feats.route_patch_score.astype(np.float32),
@@ -206,13 +232,13 @@ def real_only_prob_rows(args: argparse.Namespace, runtime) -> list[RealOnlyProbR
             route_gating_temperature=route_gating_temperature,
             route_gating_floor=route_gating_floor,
         )
-        prob, _ = predict_route_aware_meta_fusion(
+        prob = select_prob(
+            feats,
             head_bundle["route_meta_experts"],
-            feats.route_prob,
-            feats.meta_x,
             runtime.pair_route_mode,
-            route_gating_temperature=route_gating_temperature,
-            route_gating_floor=route_gating_floor,
+            args.model_key,
+            route_gating_temperature,
+            route_gating_floor,
         )
         rows.append(
             RealOnlyProbRow(
@@ -236,13 +262,13 @@ def summarize_fake_only(rows: list[MethodProbRow], threshold: float, hybrid_labe
     all_pair_dyn = []
     all_route_top1: list[str] = []
     for row in rows:
-        pred = (row.fake_prob >= threshold).astype(np.int64)
+        pred = (row.prob >= threshold).astype(np.int64)
         metrics = {
-            "num_images": int(len(row.fake_prob)),
+            "num_images": int(len(row.prob)),
             "threshold": float(threshold),
-            "mean_fake_prob": float(np.mean(row.fake_prob)),
-            "min_fake_prob": float(np.min(row.fake_prob)),
-            "max_fake_prob": float(np.max(row.fake_prob)),
+            "mean_fake_prob": float(np.mean(row.prob)),
+            "min_fake_prob": float(np.min(row.prob)),
+            "max_fake_prob": float(np.max(row.prob)),
             "fake_positive_rate": float(np.mean(pred)),
             "mean_route_fake_prob": float(np.mean(row.route_fake)),
             "mean_patch_global_prob": float(np.mean(row.patch_prob)),
@@ -262,7 +288,7 @@ def summarize_fake_only(rows: list[MethodProbRow], threshold: float, hybrid_labe
                 "route_top1_counts": route_top1_counts,
             }
         )
-        all_fake.append(row.fake_prob)
+        all_fake.append(row.prob)
         all_route.append(row.route_fake)
         all_patch.append(row.patch_prob)
         all_patch_dyn.append(row.patch_dynamic)
@@ -365,6 +391,7 @@ def main() -> None:
             "cdf_groups": list(args.cdf_groups),
             "compact_cache_dir": str(args.compact_cache_dir),
             "device": str(args.device),
+            "model_key": args.model_key,
             "thresholds": [float(x) for x in args.thresholds],
         },
         "thresholds": {},

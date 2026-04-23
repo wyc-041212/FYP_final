@@ -1,5 +1,0 @@
-variant,threshold,test_ff_bacc,ood_bacc,cdf_real_acc,cdf_fake_acc
-Full corrected,0.8,0.9465,0.7853,0.6496,0.8662
-no-FR corrected,0.8,0.8934,0.8002,0.8095,0.8664
-no-FR corrected (excluding FR in test_ff),0.8,0.9522,0.8002,0.8095,0.8664
-no-FR corrected (excluding FR in test_ff and ood),0.8,0.9522,0.8283,0.8095,0.8664

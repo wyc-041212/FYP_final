@@ -47,6 +47,9 @@ slurm-*.err
 
 # Local runtime data
 cache
+.cache/
+within_outputs/
+.superpowers/
 models
 demo/outputs/**
 data/frames/**

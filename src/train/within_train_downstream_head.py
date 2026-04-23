@@ -12,7 +12,7 @@ import joblib
 import numpy as np
 import torch
 from sklearn.linear_model import LogisticRegression, SGDClassifier
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import average_precision_score, roc_auc_score, roc_curve
 from sklearn.preprocessing import StandardScaler
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -911,12 +911,40 @@ def metrics_from_binary_prob(y_true: np.ndarray, prob: np.ndarray, threshold: fl
     real_mask = y_true == 0
     fake_acc = float(np.mean(pred[fake_mask] == 1)) if np.any(fake_mask) else 0.0
     real_acc = float(np.mean(pred[real_mask] == 0)) if np.any(real_mask) else 0.0
+    unique = np.unique(y_true)
+    if len(unique) < 2:
+        auc = 0.0
+        ap = 0.0
+        eer = 0.0
+    else:
+        auc = float(roc_auc_score(y_true, prob))
+        ap = float(average_precision_score(y_true, prob))
+        fpr, tpr, _ = roc_curve(y_true, prob)
+        fnr = 1.0 - tpr
+        diff = fpr - fnr
+        crossings = np.where(np.sign(diff[:-1]) != np.sign(diff[1:]))[0]
+        if len(crossings) > 0:
+            idx = int(crossings[0])
+            x0 = float(diff[idx])
+            x1 = float(diff[idx + 1])
+            y0 = float(fpr[idx])
+            y1 = float(fpr[idx + 1])
+            if abs(x1 - x0) < EPS:
+                eer = 0.5 * (y0 + y1)
+            else:
+                w = -x0 / (x1 - x0)
+                eer = y0 + w * (y1 - y0)
+        else:
+            idx = int(np.argmin(np.abs(diff)))
+            eer = 0.5 * (float(fpr[idx]) + float(fnr[idx]))
     return {
         "accuracy": float(np.mean(pred == y_true)),
         "balanced_accuracy": 0.5 * (fake_acc + real_acc),
         "fake_accuracy": fake_acc,
         "real_accuracy": real_acc,
-        "auc": float(roc_auc_score(y_true, prob)),
+        "auc": auc,
+        "ap": ap,
+        "eer": float(eer),
     }
 
 
@@ -1022,6 +1050,8 @@ def search_threshold(y_true: np.ndarray, prob: np.ndarray) -> dict:
                 "fake_accuracy": metrics["fake_accuracy"],
                 "real_accuracy": metrics["real_accuracy"],
                 "auc": metrics["auc"],
+                "ap": metrics["ap"],
+                "eer": metrics["eer"],
             }
     assert best is not None
     return {k: v for k, v in best.items() if k != "key"}
@@ -1039,6 +1069,8 @@ def method_metrics_with_threshold(prob_fake: np.ndarray, prob_real: np.ndarray, 
         "fake_accuracy": metrics["fake_accuracy"],
         "real_accuracy": metrics["real_accuracy"],
         "auc": metrics["auc"],
+        "ap": metrics["ap"],
+        "eer": metrics["eer"],
     }
 
 
@@ -1051,6 +1083,8 @@ def summarize_split(rows: list[dict]) -> dict:
             "mean_fake_accuracy": 0.0,
             "mean_real_accuracy": 0.0,
             "mean_auc": 0.0,
+            "mean_ap": 0.0,
+            "mean_eer": 0.0,
         }
     return {
         "num_methods": int(len(rows)),
@@ -1059,6 +1093,8 @@ def summarize_split(rows: list[dict]) -> dict:
         "mean_fake_accuracy": float(np.mean([row["metrics"]["fake_accuracy"] for row in rows])),
         "mean_real_accuracy": float(np.mean([row["metrics"]["real_accuracy"] for row in rows])),
         "mean_auc": float(np.mean([row["metrics"]["auc"] for row in rows])),
+        "mean_ap": float(np.mean([row["metrics"]["ap"] for row in rows])),
+        "mean_eer": float(np.mean([row["metrics"]["eer"] for row in rows])),
     }
 
 

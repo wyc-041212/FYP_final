@@ -78,6 +78,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-json", type=Path, required=True)
     parser.add_argument("--output-csv", type=Path, required=True)
     parser.add_argument(
+        "--fixed-threshold",
+        type=float,
+        default=None,
+        help="Use one common decision threshold for all models instead of per-model validation selection.",
+    )
+    parser.add_argument(
         "--cdf-real-name",
         action="append",
         default=["Celeb-real", "YouTube-real"],
@@ -520,7 +526,22 @@ def main() -> None:
         route_gating_temperature=route_gating_temperature,
         route_gating_floor=route_gating_floor,
     )
-    threshold_choice = {key: search_threshold(train_y[val_idx], train_score_map[key][val_idx]) for key in MODEL_KEYS}
+    threshold_choice = {}
+    for key in MODEL_KEYS:
+        if args.fixed_threshold is None:
+            threshold_choice[key] = search_threshold(train_y[val_idx], train_score_map[key][val_idx])
+            continue
+        metrics = metrics_from_binary_prob(train_y[val_idx], train_score_map[key][val_idx], float(args.fixed_threshold))
+        threshold_choice[key] = {
+            "threshold": float(args.fixed_threshold),
+            "balanced_accuracy": metrics["balanced_accuracy"],
+            "accuracy": metrics["accuracy"],
+            "fake_accuracy": metrics["fake_accuracy"],
+            "real_accuracy": metrics["real_accuracy"],
+            "auc": metrics["auc"],
+            "ap": metrics["ap"],
+            "eer": metrics["eer"],
+        }
 
     test_cls_rows = collect_cls_rows(iter_regular_cls_rows(cfg.cls_cache_root, "DF40_test_ff", cfg.test_real_cls_cache))
     ood_cls_rows = collect_cls_rows(iter_ood_cls_rows(cfg.cls_cache_root, "DF40_test_ood"))
@@ -578,6 +599,7 @@ def main() -> None:
             "head_meta": str(args.head_meta),
             "device": str(args.device),
             "threshold_candidates": [float(x) for x in args.thresholds],
+            "fixed_threshold": None if args.fixed_threshold is None else float(args.fixed_threshold),
         },
         "threshold_choice": threshold_choice,
         "models": {},
@@ -605,6 +627,8 @@ def main() -> None:
                     "fake_accuracy": threshold_choice[model_key]["fake_accuracy"],
                     "real_accuracy": threshold_choice[model_key]["real_accuracy"],
                     "auc": threshold_choice[model_key]["auc"],
+                    "ap": threshold_choice[model_key]["ap"],
+                    "eer": threshold_choice[model_key]["eer"],
                     "fake_positive_rate": "",
                     "mean_fake_prob": "",
                 },
@@ -617,6 +641,8 @@ def main() -> None:
                     "fake_accuracy": test_summary["summary"]["mean_fake_accuracy"],
                     "real_accuracy": test_summary["summary"]["mean_real_accuracy"],
                     "auc": test_summary["summary"]["mean_auc"],
+                    "ap": test_summary["summary"]["mean_ap"],
+                    "eer": test_summary["summary"]["mean_eer"],
                     "fake_positive_rate": "",
                     "mean_fake_prob": "",
                 },
@@ -629,6 +655,8 @@ def main() -> None:
                     "fake_accuracy": ood_summary["summary"]["mean_fake_accuracy"],
                     "real_accuracy": ood_summary["summary"]["mean_real_accuracy"],
                     "auc": ood_summary["summary"]["mean_auc"],
+                    "ap": ood_summary["summary"]["mean_ap"],
+                    "eer": ood_summary["summary"]["mean_eer"],
                     "fake_positive_rate": "",
                     "mean_fake_prob": "",
                 },
@@ -641,6 +669,8 @@ def main() -> None:
                     "fake_accuracy": "",
                     "real_accuracy": cdf_real_summary["pooled"]["real_accuracy"],
                     "auc": "",
+                    "ap": "",
+                    "eer": "",
                     "fake_positive_rate": cdf_real_summary["pooled"]["fake_positive_rate"],
                     "mean_fake_prob": cdf_real_summary["pooled"]["mean_fake_prob"],
                 },
@@ -661,6 +691,8 @@ def main() -> None:
                 "fake_accuracy",
                 "real_accuracy",
                 "auc",
+                "ap",
+                "eer",
                 "fake_positive_rate",
                 "mean_fake_prob",
             ],

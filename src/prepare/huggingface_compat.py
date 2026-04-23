@@ -33,9 +33,8 @@ def ensure_pillow_resampling() -> None:
 
 def patched_version(package: str) -> str:
     version = _ORIG_VERSION(package)
-    if package == "huggingface-hub":
-        if version.startswith("1."):
-            return "0.34.0"
+    package_key = package.replace("_", "-")
+    if package_key == "huggingface-hub":
         if version.startswith("0."):
             return "1.3.0"
     return version

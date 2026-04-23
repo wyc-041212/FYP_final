@@ -2,11 +2,23 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import cv2
-import dlib
 import numpy as np
-from skimage import transform as trans
+import torch
+
+from src.utils.device import resolve_device_name
+
+try:
+    import dlib
+except ModuleNotFoundError:  # pragma: no cover - environment-dependent
+    dlib = None
+
+try:
+    from skimage import transform as trans
+except ModuleNotFoundError:  # pragma: no cover - environment-dependent
+    trans = None
 
 DEFAULT_RESOLUTION = 256
 DEFAULT_SCALE = 1.3
@@ -19,11 +31,43 @@ class AlignedFaceResult:
     mask: np.ndarray | None = None
 
 
-def build_face_detector() -> dlib.fhog_object_detector:
-    return dlib.get_frontal_face_detector()
+@dataclass(slots=True)
+class FaceDetectorHandle:
+    backend: str
+    detector: Any
+
+
+def build_face_detector() -> FaceDetectorHandle:
+    try:
+        import facer
+
+        resolved = resolve_device_name("auto")
+        return FaceDetectorHandle(
+            backend="facer",
+            detector=facer.face_detector("retinaface/mobilenet", device=resolved),
+        )
+    except Exception:
+        pass
+
+    if dlib is not None:
+        return FaceDetectorHandle(
+            backend="dlib",
+            detector=dlib.get_frontal_face_detector(),
+        )
+
+    cascade_path = Path(cv2.data.haarcascades) / "haarcascade_frontalface_default.xml"
+    detector = cv2.CascadeClassifier(str(cascade_path))
+    if detector.empty():
+        raise RuntimeError(f"Failed to load Haar cascade detector from {cascade_path}")
+    return FaceDetectorHandle(
+        backend="opencv",
+        detector=detector,
+    )
 
 
 def build_shape_predictor(predictor_path: str | Path) -> dlib.shape_predictor:
+    if dlib is None:
+        raise RuntimeError("dlib is required for shape predictor preprocessing, but it is not installed.")
     path = Path(predictor_path)
     if not path.exists():
         raise FileNotFoundError(f"Predictor path does not exist: {path}")
@@ -58,6 +102,8 @@ def _img_align_crop(
     scale: float = DEFAULT_SCALE,
     mask: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray | None]:
+    if trans is None:
+        raise RuntimeError("scikit-image is required for aligned face cropping, but it is not installed.")
     target_size = [112, 112]
     dst = np.array(
         [
@@ -107,8 +153,65 @@ def select_face_like_source(faces: dlib.rectangles, rgb: np.ndarray) -> dlib.rec
     return max(faces, key=lambda rect: rect.width() * rect.height())
 
 
+def detect_primary_face_box(
+    face_detector: FaceDetectorHandle,
+    image: np.ndarray,
+) -> tuple[int, int, int, int] | None:
+    height, width = image.shape[:2]
+    if face_detector.backend == "facer":
+        rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image_t = torch.from_numpy(rgb).permute(2, 0, 1).unsqueeze(0).to(resolve_device_name("auto"))
+        with torch.inference_mode():
+            faces = face_detector.detector(image_t)
+        if faces["rects"].shape[0] == 0:
+            return None
+        scores = faces.get("scores")
+        rects = faces["rects"]
+        if scores is not None:
+            score_values = scores.detach().cpu().numpy().astype(np.float32, copy=False)
+            best_index = int(np.argmax(score_values))
+            if float(score_values[best_index]) < 0.90:
+                return None
+        else:
+            areas = (rects[:, 2] - rects[:, 0]) * (rects[:, 3] - rects[:, 1])
+            best_index = int(torch.argmax(areas).item())
+        rect = rects[best_index].detach().cpu().numpy().astype(np.float32, copy=False)
+        left = max(int(round(rect[0])), 0)
+        top = max(int(round(rect[1])), 0)
+        right = min(int(round(rect[2])), width - 1)
+        bottom = min(int(round(rect[3])), height - 1)
+    elif face_detector.backend == "dlib":
+        rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        faces = face_detector.detector(rgb, 1)
+        if len(faces) == 0:
+            return None
+        face = select_face_like_source(faces, rgb)
+        left = max(int(face.left()), 0)
+        top = max(int(face.top()), 0)
+        right = min(int(face.right()), width - 1)
+        bottom = min(int(face.bottom()), height - 1)
+    else:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        faces = face_detector.detector.detectMultiScale(
+            gray,
+            scaleFactor=1.1,
+            minNeighbors=5,
+            minSize=(48, 48),
+        )
+        if len(faces) == 0:
+            return None
+        x, y, w, h = max(faces, key=lambda rect: int(rect[2]) * int(rect[3]))
+        left = max(int(x), 0)
+        top = max(int(y), 0)
+        right = min(int(x + w), width - 1)
+        bottom = min(int(y + h), height - 1)
+    if left >= right or top >= bottom:
+        return None
+    return (left, top, right, bottom)
+
+
 def extract_aligned_face_dlib(
-    face_detector: dlib.fhog_object_detector,
+    face_detector: FaceDetectorHandle,
     predictor: dlib.shape_predictor,
     image: np.ndarray,
     res: int = DEFAULT_RESOLUTION,
@@ -116,8 +219,10 @@ def extract_aligned_face_dlib(
     scale: float = DEFAULT_SCALE,
     verify_aligned_face: bool = True,
 ) -> AlignedFaceResult | None:
+    if face_detector.backend != "dlib":
+        raise RuntimeError("Aligned face extraction requires the dlib face detector backend.")
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    faces = face_detector(rgb, 1)
+    faces = face_detector.detector(rgb, 1)
     if len(faces) == 0:
         return None
 
@@ -134,7 +239,7 @@ def extract_aligned_face_dlib(
 
     aligned_landmarks = None
     if verify_aligned_face:
-        face_align = face_detector(cropped_face, 1)
+        face_align = face_detector.detector(cropped_face, 1)
         if len(face_align) == 0:
             return None
         landmark = predictor(cropped_face, face_align[0])
